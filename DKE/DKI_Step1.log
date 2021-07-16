@@ -1,0 +1,60 @@
+03/July/2021 12:24:27 PM - DKI_Step1_logger - INFO - data source = data/MR076_MR076
+03/July/2021 12:24:27 PM - DKI_Step1_logger - INFO - Files will be saved at data/MR076_MR076/DICOM
+03/July/2021 12:24:27 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_AVE1_0005` folder with 61 files to `data/MR076_MR076/DICOM`
+03/July/2021 12:24:28 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_B0_AVE7_0010` folder with 486 files to `data/MR076_MR076/DICOM`
+03/July/2021 12:24:28 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:24:28 PM - DKI_Step1_logger - INFO - ============================== copied MR076_MR076 ==============================
+03/July/2021 12:24:28 PM - DKI_Step1_logger - INFO - `to_dicom` completed!
+03/July/2021 12:26:54 PM - DKI_Step1_logger - INFO - data source = data/MR076_MR076
+03/July/2021 12:26:54 PM - DKI_Step1_logger - INFO - Files will be saved at data/MR076_MR076/DICOM
+03/July/2021 12:26:54 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_AVE1_0005` folder with 61 files to `data/MR076_MR076/DICOM`
+03/July/2021 12:26:54 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_B0_AVE7_0010` folder with 486 files to `data/MR076_MR076/DICOM`
+03/July/2021 12:26:55 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:26:55 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:26:55 PM - DKI_Step1_logger - INFO - `to_dicom` processed 1 subjects.
+03/July/2021 12:40:03 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:40:03 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:40:03 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 12:40:20 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:40:20 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:40:20 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 12:42:22 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:42:22 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:42:22 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 12:44:09 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:44:09 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:44:09 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 12:47:59 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:47:59 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:47:59 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 12:48:18 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:48:18 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:48:18 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 12:49:10 PM - DKI_Step1_logger - INFO - data source = data/MR076_MR076
+03/July/2021 12:49:10 PM - DKI_Step1_logger - INFO - Files will be saved at new_data/MR076_MR076/DICOM
+03/July/2021 12:49:10 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_AVE1_0005` folder with 61 files to `new_data/MR076_MR076/DICOM`
+03/July/2021 12:49:10 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_B0_AVE7_0010` folder with 486 files to `new_data/MR076_MR076/DICOM`
+03/July/2021 12:49:10 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:49:10 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:49:10 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 12:49:31 PM - DKI_Step1_logger - INFO - data source = data/MR076_MR076
+03/July/2021 12:49:31 PM - DKI_Step1_logger - INFO - Files will be saved at new_data/MR076_MR076/DICOM
+03/July/2021 12:49:31 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_AVE1_0005` folder with 61 files to `new_data/MR076_MR076/DICOM`
+03/July/2021 12:49:31 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_B0_AVE7_0010` folder with 486 files to `new_data/MR076_MR076/DICOM`
+03/July/2021 12:49:31 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 12:49:31 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 12:49:31 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 03:25:04 PM - DKI_Step1_logger - INFO - data source = data/MR076_MR076
+03/July/2021 03:25:04 PM - DKI_Step1_logger - INFO - Files will be saved at new_data/MR076_MR076/DICOM
+03/July/2021 03:25:04 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_AVE1_0005` folder with 61 files to `new_data/MR076_MR076/DICOM`
+03/July/2021 03:25:04 PM - DKI_Step1_logger - INFO - Copying `data/MR076_MR076/HEAD_MRSI-DKI-MARCH2017_20180415_112220_843000/DKI_30DIR_B0_AVE7_0010` folder with 486 files to `new_data/MR076_MR076/DICOM`
+03/July/2021 03:25:04 PM - DKI_Step1_logger - INFO - [0/1] Copied MR076_MR076 to DICOM folder.
+03/July/2021 03:25:04 PM - DKI_Step1_logger - INFO - ========== copied MR076_MR076 ==========
+03/July/2021 03:25:04 PM - DKI_Step1_logger - INFO - Complete. `to_dicom` processed 1 subjects.
+03/July/2021 04:18:12 PM - DKI_Step1_logger - INFO - .dat file created at `data/MR076_MR076/DICOM/DKEParameters.dat`.
+03/July/2021 04:18:12 PM - DKI_Step1_logger - INFO - Starting DKE processing...
+03/July/2021 04:18:12 PM - DKI_Step1_logger - INFO - DKE processing completed for `data/MR076_MR076/DICOM` subject.
+03/July/2021 04:18:12 PM - DKI_Step1_logger - INFO - 0 IMA files deleted from `data/MR076_MR076/DICOM`.
+03/July/2021 04:29:57 PM - DKI_Step1_logger - INFO - .dat file created at `data/DKEParameters.dat`.
+03/July/2021 04:29:57 PM - DKI_Step1_logger - INFO - Starting DKE processing...
+03/July/2021 04:29:57 PM - DKI_Step1_logger - INFO - DKE processing completed for `data` subject.
