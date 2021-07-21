@@ -1,6 +1,7 @@
 # custom
 data/
 pgi_venv
+pgi_env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

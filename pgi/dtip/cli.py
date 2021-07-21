@@ -1,0 +1,36 @@
+import click
+from pgi.dtip.dtip import *
+
+
+@click.group()
+def cli():
+    """
+    Welcome to DTI processing tool for ITC cases.
+
+    """
+
+
+@cli.command()
+@click.argument('subject_path', type=click.Path(exists=True))
+@click.option("-o", "--output_folder", default="./dtip_outputs", show_default=True,
+              help="folder location to save outputs.")
+def process_subject(subject_path, output_folder):
+    """Perform DTI processing on one subject.
+
+        SUBJECT_PATH - path to subject folder or zip file.
+    """
+    process_one_subject(subject_path, output_folder)
+    # click.echo(click.format_filename(subject_path))
+
+
+@cli.command()
+@click.argument('datadir', type=click.Path(exists=True))
+def process_subjects(datadir):
+    """Perform DTI processing on multiple subjects"""
+
+    # click.echo(click.format_filename(datadir))
+    pass
+
+
+if __name__ == '__main__':
+    cli()
