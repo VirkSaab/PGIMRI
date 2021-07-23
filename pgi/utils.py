@@ -7,11 +7,15 @@ from itertools import cycle
 from shutil import get_terminal_size
 from threading import Thread
 
-__all__ = [
-    "get_logger",
-    "SpinCursor", "SpinCursor2"
 
+__all__ = [
+    # Functions
+    "get_logger",
+
+    # Classes
+    "SpinCursor"
 ]
+
 
 # ================================== FUNCTIONS ###############################
 def get_logger(name: str, log_level="DEBUG",
@@ -49,58 +53,8 @@ def get_logger(name: str, log_level="DEBUG",
 
 
 # ============================== CLASSES ==============================
-class SpinCursor(Thread):
-    """ A console spin cursor class 
-    """
-    
-    def __init__(self, cursor_type:str="bar"):
-        """Choose one of `spin` and `bar`"""
-        self.t = Thread(target=self.animate)
-        # This will make the thread stop if the main process
-        # is killed (i.e. from a KeyboardInterrupt)
-        self.t.daemon=True
-
-        if cursor_type == 'bar':
-            self.bar = [
-                " [=     ]",
-                " [ =    ]",
-                " [  =   ]",
-                " [   =  ]",
-                " [    = ]",
-                " [     =]",
-                " [    = ]",
-                " [   =  ]",
-                " [  =   ]",
-                " [ =    ]",
-            ]
-        elif cursor_type == 'spin':
-            self.bar = ['|', '/', '-', '\\']
-        else:
-            raise NotImplementedError("choose one [`spin`, `bar`].")
-
-        self.bar_len = len(self.bar)
-        self.flag = True
-        
-    def animate(self):
-        i = 0
-        while self.flag:
-            # print(self.bar[i % self.bar_len], end="\r")
-            sys.stdout.write('\r' + self.bar[i % self.bar_len])
-            sys.stdout.flush()
-            time.sleep(.15)
-            i += 1
-        sys.stdout.write('              \ndone!             ')
-        sys.stdout.write('\n')
-
-    def start(self):
-        self.t.start()
-
-    def stop(self):
-        self.flag = False
-
-
-class SpinCursor2:
-    def __init__(self, desc="Loading...", end="Done!", timeout=0.1):
+class SpinCursor:
+    def __init__(self, desc="Loading...", end="Done!", cursor_type="bar", timeout=0.1):
         """
         A loader-like context manager
         source: https://stackoverflow.com/questions/22029562/python-how-to-make-simple-animated-loading-while-process-is-running
@@ -115,7 +69,27 @@ class SpinCursor2:
         self.timeout = timeout
 
         self._thread = Thread(target=self._animate, daemon=True)
-        self.steps = ["⢿", "⣻", "⣽", "⣾", "⣷", "⣯", "⣟", "⡿"]
+
+        if cursor_type == 'bar':
+            self.steps = [
+                "[=     ]",
+                "[ =    ]",
+                "[  =   ]",
+                "[   =  ]",
+                "[    = ]",
+                "[     =]",
+                "[    = ]",
+                "[   =  ]",
+                "[  =   ]",
+                "[ =    ]",
+            ]
+        elif cursor_type == 'spin':
+            self.steps = ['|', '/', '-', '\\']
+        elif cursor_type == 'django':
+            self.steps = ["⢿", "⣻", "⣽", "⣾", "⣷", "⣯", "⣟", "⡿"]
+        else:
+            raise NotImplementedError("choose one [`spin`, `bar`, `django`].")
+
         self.done = False
 
     def start(self):
