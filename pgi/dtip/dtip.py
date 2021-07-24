@@ -8,7 +8,7 @@ from pathlib import Path
 from pgi.utils import get_logger, SpinCursor
 
 
-logger = get_logger(__name__, to_file=f"dti_processing.log")
+logger = get_logger(__name__)
 
 
 def process_one_subject(subject_path: Union[str, Path],
@@ -99,22 +99,7 @@ def process_one_subject(subject_path: Union[str, Path],
     
     
 
-def get_parent_folder(path):
-    """To get parent folder if subject files are extracted from a zip file."""
-    out = path
-    max_depth, counter = 50, 0
-    while True:
-        out = list(os.path.split(out))
-        name = out.pop(-1)
-        out = out[0]
-        if len(out) == 0:
-            break
-        if counter >= max_depth:
-            _msg = f"[Step 0 Error] max search depth reached!"
-            _msg += " Cannot figure out root folder :("
-            logger.error(_msg)
-            raise Exception(_msg)        
-    return name
+
     
 def dicom_to_nifti_py(subject_path: Union[str, Path],
                       output_folder: Union[str, Path],

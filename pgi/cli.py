@@ -1,12 +1,11 @@
 import os
 import click
+from pgi.config import LOG_LEVEL
 from pgi.utils import get_logger
 
 
 CONTEXT_SETTINGS = dict(auto_envvar_prefix="COMPLEX")
 ROOTDIR = os.path.abspath(os.path.dirname(__file__))
-DEFAULT_LOG_LEVEL = "DEBUG"
-
 
 class ComplexCLI(click.MultiCommand):
     """CLI files finder and loader class"""
@@ -45,18 +44,15 @@ class ComplexCLI(click.MultiCommand):
         return mod.cli
 
 
-logger = get_logger("pgi_main", log_level=DEFAULT_LOG_LEVEL,
-                    to_file="pgi.log")
+logger = get_logger("pgi_main")
 
 
 @click.command(cls=ComplexCLI, context_settings=CONTEXT_SETTINGS)
-@click.option("--log_level", default="INFO", show_default=True,
-              help="Either CRITICAL, ERROR, WARNING, INFO or DEBUG.")
-def cli(log_level):
+def cli():
     """Welcome to PGI CLI tool.
 
         dtip - Diffusion Tensor Imaging (DTI) processing pipeline CLI.
         
         dkip - Diffusion Kurtosis Imaging (DKI) processing pipeline CLI.
     """
-    logger.setLevel(log_level)
+    logger.setLevel(LOG_LEVEL)

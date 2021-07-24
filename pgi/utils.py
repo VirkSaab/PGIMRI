@@ -6,6 +6,7 @@ import time
 from itertools import cycle
 from shutil import get_terminal_size
 from threading import Thread
+from pgi.config import *
 
 
 __all__ = [
@@ -18,8 +19,8 @@ __all__ = [
 
 
 # ================================== FUNCTIONS ###############################
-def get_logger(name: str, log_level="DEBUG",
-               to_file: str = '', file_log_level="DEBUG") -> logging.Logger:
+def get_logger(name: str, log_level=LOG_LEVEL,
+               to_file: str = LOG_FILENAME, file_log_level=FILE_LOG_LEVEL) -> logging.Logger:
     echo_kwargs = {
         'error': dict(err=True),
         'exception': dict(err=True),
