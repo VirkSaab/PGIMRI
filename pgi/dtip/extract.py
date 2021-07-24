@@ -15,6 +15,9 @@ def extract_subject(src_file:Union[str, Path], dst_folder:Union[str, Path]='.') 
     Args:
     > src_file -- subject zip file path.
     > dst_folder -- folder where extract files will be saved. [default: same as `src_file`]
+
+    Returns:
+        extracted folder path.
     """
 
     src_file, dst_folder = Path(src_file), Path(dst_folder)
@@ -37,7 +40,7 @@ def extract_subject(src_file:Union[str, Path], dst_folder:Union[str, Path]='.') 
     return dst_folder
 
 
-def get_parent_folder(path:Union[str, Path]):
+def get_parent_folder(path:Union[str, Path]) -> str:
     """To get parent folder if subject files are extracted from a zip file."""
 
     path = str(path)

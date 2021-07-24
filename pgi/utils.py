@@ -17,8 +17,9 @@ __all__ = [
     "SpinCursor"
 ]
 
-
 # ================================== FUNCTIONS ###############################
+
+
 def get_logger(name: str, log_level=LOG_LEVEL,
                to_file: str = LOG_FILENAME, file_log_level=FILE_LOG_LEVEL) -> logging.Logger:
     echo_kwargs = {
@@ -30,9 +31,11 @@ def get_logger(name: str, log_level=LOG_LEVEL,
         'error': dict(fg='red', blink=True),
         'critical': dict(fg='red', blink=True),
         'warning': dict(fg='yellow', blink=True),
-        'exception': dict(fg='yellow', blink=True),        
+        'exception': dict(fg='yellow', blink=True),
         'info': dict(fg='cyan', blink=True),
-        'debug': dict(fg='green', blink=True)
+        'debug': dict(fg='green', blink=True),
+        'todo': dict(fg='green', blink=True)
+
     }
     logger = logging.getLogger(f"logger_name: {name}")
     logger.setLevel(log_level)
