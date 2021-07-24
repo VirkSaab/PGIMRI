@@ -15,8 +15,8 @@ def cli():
 @click.option("-o", "--output_folder", default="./dtip_outputs", show_default=True,
               help="folder location to save outputs.")
 @click.option("-nm", "--nifti_method", 
-type=click.Choice(['dcm2niix', 'dicom2nifti'], case_sensitive=False),
-default="dcm2niix",help="dcm2niix is Mricron's subpackage. dicom2nifti is python package."
+type=click.Choice(['auto', 'dcm2nii', 'dcm2niix', 'dicom2nifti'], case_sensitive=False),
+default="auto",help="dcm2niix is Mricron's subpackage. dicom2nifti is python package."
 )
 def process_subject(subject_path, output_folder, nifti_method):
     """Perform DTI processing on one subject.

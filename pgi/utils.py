@@ -28,7 +28,7 @@ def get_logger(name: str, log_level="DEBUG",
     style_kwargs = {
         'error': dict(fg='red', blink=True),
         'critical': dict(fg='red', blink=True),
-        'warning': dict(fg='orange', blink=True),
+        'warning': dict(fg='yellow', blink=True),
         'exception': dict(fg='yellow', blink=True),        
         'info': dict(fg='cyan', blink=True),
         'debug': dict(fg='green', blink=True)
