@@ -4,8 +4,8 @@ import subprocess
 import nibabel as nib
 from typing import Union
 from pathlib import Path
-from pgi.utils import SpinCursor
-from pgi.config import *
+from pgimri.utils import SpinCursor
+from pgimri.config import *
 
 
 __all__ = [

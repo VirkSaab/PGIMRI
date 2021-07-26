@@ -5,7 +5,10 @@ import zipfile
 import subprocess
 from typing import Union
 from pathlib import Path
-from pgi.utils import get_logger, SpinCursor
+from pgimri.utils import get_logger, SpinCursor
+
+
+__all__ = ["process_one_subject"]
 
 
 logger = get_logger(__name__)

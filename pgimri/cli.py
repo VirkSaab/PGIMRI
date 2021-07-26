@@ -1,7 +1,7 @@
 import os
 import click
-from pgi.config import LOG_LEVEL
-from pgi.utils import get_logger, addLoggingLevel
+from pgimri.config import LOG_LEVEL
+from pgimri.utils import get_logger, addLoggingLevel
 
 
 CONTEXT_SETTINGS = dict(auto_envvar_prefix="COMPLEX")
@@ -38,18 +38,18 @@ class ComplexCLI(click.MultiCommand):
         try:
             # {name} is the package like `dtip` and `dkip` and
             # `.cli` is the `cli.py` file inside these.
-            mod = __import__(f"pgi.{name}.cli", None, None, ["cli"])
+            mod = __import__(f"pgimri.{name}.cli", None, None, ["cli"])
         except ImportError:
             return
         return mod.cli
 
 
-logger = get_logger("pgi_main")
+logger = get_logger("pgimri_main")
 
 
 @click.command(cls=ComplexCLI, context_settings=CONTEXT_SETTINGS)
 def cli():
-    """Welcome to PGI CLI tool.
+    """Welcome to PGIMRI CLI tool.
 
         dtip - Diffusion Tensor Imaging (DTI) processing pipeline CLI.
         

@@ -3,8 +3,8 @@ import zipfile
 from pathlib import Path
 from typing import Union
 
-from pgi.utils import get_logger, SpinCursor
-from pgi.config import *
+from pgimri.utils import get_logger, SpinCursor
+from pgimri.config import *
 
 logger = get_logger(__name__)
 

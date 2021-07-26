@@ -10,15 +10,15 @@ def read_requirements():
 
 
 setup(
-    name='pgi',
+    name='pgimri',
     version='0.0.1',
     packages=find_packages(),
     include_package_date=True,
     install_requires=read_requirements(),
     entry_points="""
         [console_scripts]
-        pgi=pgi.cli:cli
-        dtip=pgi.dtip.cli:cli
-        dkip=pgi.dkip.cli:cli
+        pgimri=pgimri.cli:cli
+        dtip=pgimri.dtip.cli:cli
+        dkip=pgimri.dkip.cli:cli
     """,
 )

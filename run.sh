@@ -1,7 +1,7 @@
-export PYTHONPATH=$PYTHONPATH:pgi
+export PYTHONPATH=$PYTHONPATH:pgimri
 
 # Check if the script is working
-python pgi/dtip/dtip.py --help
+python pgimri/dtip/dtip.py --help
 
 # Create a requirements files
 pip list --format=freeze > requirements.txt

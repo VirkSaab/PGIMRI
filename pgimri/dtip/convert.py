@@ -3,8 +3,8 @@ import subprocess
 import dicom2nifti
 from typing import Union, Tuple
 from pathlib import Path
-from pgi.utils import get_logger, SpinCursor
-from pgi.config import *
+from pgimri.utils import get_logger, SpinCursor
+from pgimri.config import *
 
 logger = get_logger(__name__)
 

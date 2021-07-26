@@ -4,8 +4,8 @@ import shutil
 from typing import Union
 from pathlib import Path
 import nibabel as nib
-from pgi.utils import get_logger, SpinCursor
-from pgi.config import *
+from pgimri.utils import get_logger, SpinCursor
+from pgimri.config import *
 
 
 __all__ = ["locate_data_files"]

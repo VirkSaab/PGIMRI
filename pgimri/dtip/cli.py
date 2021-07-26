@@ -1,9 +1,12 @@
+import os
 import click
-from pgi.dtip.dtip import *
-from pgi.dtip.extract import extract_subject
-from pgi.dtip.convert import convert_dicom_to_nifti
-from pgi.dtip.locate  import locate_data_files
-from pgi.dtip.generate import *
+from typing import Union
+from pathlib import Path
+from pgimri.dtip.dtip import *
+from pgimri.dtip.extract import extract_subject
+from pgimri.dtip.convert import convert_dicom_to_nifti
+from pgimri.dtip.locate  import locate_data_files
+from pgimri.dtip.generate import *
 
 @click.group()
 def cli():
