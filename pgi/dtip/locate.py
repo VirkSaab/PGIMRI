@@ -7,6 +7,9 @@ import nibabel as nib
 from pgi.utils import get_logger, SpinCursor
 from pgi.config import *
 
+
+__all__ = ["locate_data_files"]
+
 logger = get_logger(__name__)
 
 
@@ -80,7 +83,8 @@ def locate_data_files(src_folder: Union[str, Path],
     series_dict = {}
     for k in files_dict.keys():
         for f in files_dict[k]:
-            # This regex search for series numbers like s<series>.nii or s<series>a...
+            # This regex search for series numbers like s<series>.nii
+            # or s<series>a...
             series = re.search(r"s[0-9]+(\.|a)", f.lower())
             _from, _to = series.span()
             # +1 and -1 remove `s` and (`a` or `.`)
