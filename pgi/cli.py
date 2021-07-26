@@ -1,7 +1,7 @@
 import os
 import click
 from pgi.config import LOG_LEVEL
-from pgi.utils import get_logger
+from pgi.utils import get_logger, addLoggingLevel
 
 
 CONTEXT_SETTINGS = dict(auto_envvar_prefix="COMPLEX")
