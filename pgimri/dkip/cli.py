@@ -4,7 +4,7 @@ import click
 @click.command()
 def cli():
     """
-    Welcome to DKE processing tool.
+    Diffusion Kurtosis Imaging (DKI) Processing tool.
 
     """
     click.echo("<<<< Not implemented yet >>>>")

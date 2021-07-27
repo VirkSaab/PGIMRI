@@ -1,5 +1,3 @@
-import os
-import shutil
 import subprocess
 import nibabel as nib
 from typing import Union
@@ -72,11 +70,13 @@ def generate_acquisition_params_file(readout_time: float = READOUT_TIME,
         PA_PE = PA_PE.split(",")
 
     first_line = f"{' '.join(AP_PE)} {readout_time}\n"
-    second_line = f"{' '.join(PA_PE)} {readout_time}"
+    if PA_PE:
+        second_line = f"{' '.join(PA_PE)} {readout_time}"
 
     with open(dst_filepath, 'w') as acq_file:
         acq_file.write(first_line)
-        acq_file.write(second_line)
+        if second_line:
+            acq_file.write(second_line)
 
     return 0
 

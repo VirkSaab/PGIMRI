@@ -113,9 +113,26 @@ def locate_data_files(src_folder: Union[str, Path],
     logger.warning("What if all the mentioned files are not in best_series?")
     logger.warning("How to handle multiple file in one series?")
     
+    # Choose one .nii.gz file if there are more than one
+    selected_files = [
+        file for file in series_dict[best_series]
+        if file.endswith(".nii.gz") and file.startswith("x")
+    ]
+    # if no `x` type data file found then choose any one .nii.gz file.
+    if len(selected_files) == 0:
+        selected_files = [
+            file for file in series_dict[best_series]
+            if file.endswith(".nii.gz")
+        ][0]
+    # Add rest of the metadata files
+    for file in series_dict[best_series]:
+            if not file.endswith(".nii.gz"):
+                selected_files.append(file)
+
+    logger.debug(f"Finally {len(selected_files)} files are selected.")
     logger.debug(f"Copying files to {dst_folder}")
-    total_files_left = len(series_dict[best_series])
-    for i, filename in enumerate(series_dict[best_series], start=1):
+    total_files_left = len(selected_files)
+    for i, filename in enumerate(selected_files, start=1):
         filepath = os.path.join(src_folder, filename)
         savepath = dst_folder/filename
         shutil.copy(filepath, savepath)

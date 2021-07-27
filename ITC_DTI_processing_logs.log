@@ -1,0 +1,13 @@
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - Found 7 relevant files.
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [WARNING] - TWO KEYS? .nii and .nii.gz, how to merge?
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - Only 1 series left. Series number is 501.
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [WARNING] - What if all the mentioned files are not in best_series?
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [WARNING] - How to handle multiple file in one series?
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - Copying files to fix_data
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - [1/5] Copied `../dicom-nifti-output/xDTImediumisos501a1005.bval` to `fix_data/xDTImediumisos501a1005.bval`.
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - [2/5] Copied `../dicom-nifti-output/xDTImediumisos501a1005.bvec` to `fix_data/xDTImediumisos501a1005.bvec`.
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - [3/5] Copied `../dicom-nifti-output/DTI_medium_iso_s501.json` to `fix_data/DTI_medium_iso_s501.json`.
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - [4/5] Copied `../dicom-nifti-output/xDTImediumisos501a1005.nii.gz` to `fix_data/xDTImediumisos501a1005.nii.gz`.
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - [5/5] Copied `../dicom-nifti-output/DTI_medium_iso_s501.nii.gz` to `fix_data/DTI_medium_iso_s501.nii.gz`.
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [INFO] - Total files obtained = 5
+27/July/2021 11:00:51 AM - logger_name: pgimri.dtip.locate - [DEBUG] - ALL DONE!

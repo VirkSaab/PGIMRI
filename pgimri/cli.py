@@ -1,11 +1,18 @@
 import os
 import click
+from pyfiglet import Figlet
+from rich.console import Console
 from pgimri.config import LOG_LEVEL
-from pgimri.utils import get_logger, addLoggingLevel
+from pgimri.utils import get_logger
 
 
+# This generates `PGI MRI` banner in CLI.
+f = Figlet(font='smslant')
+console = Console()
+console.print(f"[bold cyan]{f.renderText('PGI MRI')}[/bold cyan]")
 CONTEXT_SETTINGS = dict(auto_envvar_prefix="COMPLEX")
 ROOTDIR = os.path.abspath(os.path.dirname(__file__))
+
 
 class ComplexCLI(click.MultiCommand):
     """CLI files finder and loader class"""
@@ -31,16 +38,19 @@ class ComplexCLI(click.MultiCommand):
 
     def get_command(self, ctx, name: str) -> click.core.Command:
         """This function imports commands from `cli.py` files
+
         Args:
-            ctx: click context object
-            name: name of the folder from which cli.py file should be loaded
+            > ctx -- click context object
+            > name -- name of the folder from which cli.py file should be loaded
         """
+
         try:
             # {name} is the package like `dtip` and `dkip` and
             # `.cli` is the `cli.py` file inside these.
             mod = __import__(f"pgimri.{name}.cli", None, None, ["cli"])
         except ImportError:
             return
+
         return mod.cli
 
 
@@ -49,10 +59,14 @@ logger = get_logger("pgimri_main")
 
 @click.command(cls=ComplexCLI, context_settings=CONTEXT_SETTINGS)
 def cli():
-    """Welcome to PGIMRI CLI tool.
+    """Welcome to PGI-MRI CLI tool.
 
-        dtip - Diffusion Tensor Imaging (DTI) processing pipeline CLI.
+        This CLI is a Python wrapper for ``dcm2nii``
+        This tool supports two MR modalities:
         
-        dkip - Diffusion Kurtosis Imaging (DKI) processing pipeline CLI.
+        1. DKI - Diffusion Kurtosis Imaging
+        
+        2. DTI - Diffusion Tensor Imaging
     """
+
     logger.setLevel(LOG_LEVEL)

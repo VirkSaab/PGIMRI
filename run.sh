@@ -1,7 +1,7 @@
 export PYTHONPATH=$PYTHONPATH:pgimri
 
 # Check if the script is working
-python pgimri/dtip/dtip.py --help
+# python pgimri/dtip/dtip.py --help
 
 # Create a requirements files
 pip list --format=freeze > requirements.txt
@@ -9,6 +9,14 @@ pip list --format=freeze > requirements.txt
 # install pgi package with editable mode
 pip install --editable .
 
+# Make documentation
+# Some sphinx error fixes:
+# https://stackoverflow.com/questions/13516404/sphinx-error-unknown-directive-type-automodule-or-autoclass
+
+cd PGI/PGIMRI/pgimri/docs
+sphinx-build -b html . build/html
+sphinx-apidoc -o . .. --force
+make html
 
 ## CLI example commands
 

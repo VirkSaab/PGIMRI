@@ -11,7 +11,7 @@ from pgimri.dtip.generate import *
 @click.group()
 def cli():
     """
-    Welcome to DTI processing tool for ITC cases.
+    Diffusion Tensor Imaging (DTI) Processing tool.
     """
 
 
