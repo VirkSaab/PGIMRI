@@ -4,7 +4,8 @@ from pyfiglet import Figlet
 from rich.console import Console
 from pgimri.config import LOG_LEVEL
 from pgimri.utils import get_logger
-
+from rich.traceback import install
+install()
 
 # This generates `PGI MRI` banner in CLI.
 f = Figlet(font='smslant')

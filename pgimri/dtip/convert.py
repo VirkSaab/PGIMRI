@@ -13,7 +13,7 @@ def convert_dicom_to_nifti(input_path: Union[str, Path],
                            output_path: Union[str, Path],
                            method: str = "auto",
                            compression: bool = True,
-                           reorient: bool = True) -> None:
+                           reorient: bool = True) -> int:
     """Convert all DICOM files in `input_path` to NIfTI (.nii or .nii.gz) files.
 
     Args:
@@ -53,6 +53,7 @@ def convert_dicom_to_nifti(input_path: Union[str, Path],
         _msg += "Only supports `auto`, `dcm2nii`, `dcm2niix`, or `dicom2nifti`"
         raise NotImplementedError(_msg)
 
+    return 0
 
 def method_dcm2nii(input_path: Union[str, Path],
                    output_path: Union[str, Path],

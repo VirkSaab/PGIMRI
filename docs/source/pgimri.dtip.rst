@@ -20,14 +20,6 @@ pgimri.dtip.convert module
    :undoc-members:
    :show-inheritance:
 
-pgimri.dtip.dtip module
------------------------
-
-.. automodule:: pgimri.dtip.dtip
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pgimri.dtip.extract module
 --------------------------
 
@@ -48,6 +40,14 @@ pgimri.dtip.locate module
 -------------------------
 
 .. automodule:: pgimri.dtip.locate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pgimri.dtip.process module
+--------------------------
+
+.. automodule:: pgimri.dtip.process
    :members:
    :undoc-members:
    :show-inheritance:
