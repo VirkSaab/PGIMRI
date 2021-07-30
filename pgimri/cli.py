@@ -9,7 +9,7 @@ from pgimri.utils import get_logger
 # This generates `PGI MRI` banner in CLI.
 f = Figlet(font='smslant')
 console = Console()
-console.print(f"[bold cyan]{f.renderText('PGI MRI')}[/bold cyan]")
+console.print(f"[bold cyan]{f.renderText('P G I  -  M R I')}[/bold cyan]")
 CONTEXT_SETTINGS = dict(auto_envvar_prefix="COMPLEX")
 ROOTDIR = os.path.abspath(os.path.dirname(__file__))
 

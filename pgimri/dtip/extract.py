@@ -13,11 +13,20 @@ def extract_subject(src_file:Union[str, Path], dst_folder:Union[str, Path]='.') 
     """Extract zip file of a subject
 
     Args:
-    > src_file -- subject zip file path.
-    > dst_folder -- folder where extract files will be saved. [default: same as `src_file`]
+        src_file: subject zip file path.
+        dst_folder: folder where extract files will be saved. [default: same as `src_file`]
 
     Returns:
         extracted folder path.
+
+    Example:
+
+        .. code-block:: python
+        
+            input_path = "path/to/example_subject.zip"
+            output_path = "example_outputs"
+            extract_subject(input_path, output_path)
+
     """
 
     src_file, dst_folder = Path(src_file), Path(dst_folder)

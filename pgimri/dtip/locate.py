@@ -4,7 +4,7 @@ import shutil
 from typing import Union
 from pathlib import Path
 import nibabel as nib
-from pgimri.utils import get_logger, SpinCursor
+from pgimri.utils import get_logger
 from pgimri.config import *
 
 
@@ -13,36 +13,30 @@ __all__ = ["locate_data_files"]
 logger = get_logger(__name__)
 
 
-def locate_data_files(src_folder: Union[str, Path],
-                      dst_folder: Union[str, Path],
-                      file_names: list = ["dti_medium_iso", "dtimediumiso"],
-                      exclude: list = ["reg", "fareg"],
-                      extensions: list = ['.bval', '.bvec', '.json']) -> dict:
+def locate_data_files(input_path: Union[str, Path],
+                      output_path: Union[str, Path],
+                      file_names: list = DTI_FILENAMES_LIST,
+                      exclude: list = EXCLUDE_LIST,
+                      extensions: list = META_EXTENSIONS) -> dict:
     """Locate main DTI data file and related metadata files.
 
     Args:
-        > src_folder -- folder path where to look for files.
-        > dst_folder -- copy located files (if any) to `dst_folder` 
-        and renamed as `dtidata.<extension>.`
-        > file_names -- name(s) of file(s) to search for. By default, main file
-        has names given in `file_names`. For example, main files will have a name 
-        `<...> DTI medium iso <...>.nii.gz` or uncompressed .nii with 17 volumes.
-        > exclude -- Suppose you want a file named `DTImediumiso` but not
-        `RegDTImediumiso`. then add `reg` in the `exclude` list.
-        > extensions -- Other than main DTI data, metadata files such as
-        `.bval` and `.bvec` files might be required for further processing.
-        Usually, these metadata files will have same name with different extension.
+        input_path: folder path where to look for files.
+        output_path: copy located files (if any) to `output_path` and renamed as `dtidata.<extension>.`
+        file_names: name(s) of file(s) to search for. By default, main file has names given in `file_names`. For example, main files will have a name `<...> DTI medium iso <...>.nii.gz` or uncompressed .nii with 17 volumes.
+        exclude: Suppose you want a file named `DTImediumiso` but not `RegDTImediumiso`. then add `reg` in the `exclude` list.
+        extensions: Other than main DTI data, metadata files such as `.bval` and `.bvec` files might be required for further processing. Usually, these metadata files will have same name with different extension.
         
     Returns:
-        dict object containing relevant files with full path.
+        `dict` with selected files paths where key is file extension and value is the file path.
     """
 
-    src_folder, dst_folder = Path(src_folder), Path(dst_folder)
+    input_path, output_path = Path(input_path), Path(output_path)
 
-    extensions += ['.nii', '.nii.gz'] # DTI data files format
+    extensions.append('.nii.gz') # DTI data files format
 
-    # Get all filenames in `src_folder`
-    all_filenames = os.listdir(src_folder)
+    # Get all filenames in `input_path`
+    all_filenames = os.listdir(input_path)
     # _extensions = '|'.join([f"{ext}$" for ext in extensions])
 
     relevant_files = []
@@ -73,7 +67,7 @@ def locate_data_files(src_folder: Union[str, Path],
     # Filter DTI data and pick most relevant file
     logger.warning("TWO KEYS? .nii and .nii.gz, how to merge?")
     for idx, f in enumerate(files_dict[".nii.gz"]):
-        img = nib.load(src_folder/f)
+        img = nib.load(input_path/f)
         z, y, z, t = img.shape
         # Check if file has desired diffusion dimesion.
         if t != N_DTI_VOLUMES: # Remove DTI files if volumes are more or less.
@@ -92,8 +86,7 @@ def locate_data_files(src_folder: Union[str, Path],
 
             # Check if series is persent as a key. Else create new
             if series not in series_dict.keys():
-                series_dict[series] = []
-                series_dict[series].append(f)
+                series_dict[series] = [f]
             else:
                 series_dict[series].append(f)
 
@@ -106,8 +99,8 @@ def locate_data_files(src_folder: Union[str, Path],
     else:
         logger.debug(f"Only 1 series left. Series number is {best_series}.")
 
-    # Copy the filtered files to `dst_folder`
-    dst_folder.mkdir(parents=True, exist_ok=True)
+    # Copy the filtered files to `output_path`
+    output_path.mkdir(parents=True, exist_ok=True)
 
     #TODO RESOLVE THESE
     logger.warning("What if all the mentioned files are not in best_series?")
@@ -130,15 +123,22 @@ def locate_data_files(src_folder: Union[str, Path],
                 selected_files.append(file)
 
     logger.debug(f"Finally {len(selected_files)} files are selected.")
-    logger.debug(f"Copying files to {dst_folder}")
-    total_files_left = len(selected_files)
+    logger.debug(f"Copying files to {output_path}")
+    total_files_left, ret_dict = len(selected_files), {}
     for i, filename in enumerate(selected_files, start=1):
-        filepath = os.path.join(src_folder, filename)
-        savepath = dst_folder/filename
+        # Copy Paste selected files to new location
+        filepath = os.path.join(input_path, filename)
+        savepath = output_path/filename
         shutil.copy(filepath, savepath)
         logger.debug(f"[{i}/{total_files_left}] Copied `{filepath}` to `{savepath}`.")
+
+        # add the selected filepath to return dict
+        if filename.endswith(".nii.gz"):
+            ret_dict[".nii.gz"] = savepath
+        else:
+            ret_dict[savepath.suffix] = savepath
     
     logger.info(f"Total files obtained = {total_files_left}")
     logger.debug("ALL DONE!")
     
-    
+    return ret_dict

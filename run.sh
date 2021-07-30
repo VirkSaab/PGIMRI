@@ -12,11 +12,19 @@ pip install --editable .
 # Make documentation
 # Some sphinx error fixes:
 # https://stackoverflow.com/questions/13516404/sphinx-error-unknown-directive-type-automodule-or-autoclass
-
-cd PGI/PGIMRI/pgimri/docs
-sphinx-build -b html . build/html
-sphinx-apidoc -o . .. --force
+sphinx-quickstart docs
+cd docs
+# sphinx-build -b html . build/html
+sphinx-build -b html source/ build/html
+# sphinx-apidoc -o . .. --force
+sphinx-apidoc -o source/ ../pgimri
 make html
+# To automatically generate HTML updates: follow these instructions - https://sublime-and-sphinx-guide.readthedocs.io/en/latest/build.html#automatically-generate-html-updates
+
+
+
+
+
 
 ## CLI example commands
 

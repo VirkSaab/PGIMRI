@@ -1,6 +1,13 @@
 # Folders settings
 PROCESSED_DATA_FOLDERNAME = "processed_data"
 
+# DTI data file names to filter the relevant files
+DTI_FILENAMES_LIST = ["dti_medium_iso", "dtimediumiso"]
+# If there are some files with the same name as `dti_medium_iso` such as `faregdti_medium_iso` then enter those names
+EXCLUDE_LIST = ["reg", "fareg"]
+# extensions of metadata files
+META_EXTENSIONS = ['.bval', '.bvec', '.json']
+
 # Scan Parameters
 N_DTI_VOLUMES = 16
 
@@ -17,3 +24,5 @@ READOUT_TIME =  0.05
 LOG_FILENAME = "ITC_DTI_processing_logs.log" # Set to `None` if you do not want to create a log file.
 LOG_LEVEL = "DEBUG"
 FILE_LOG_LEVEL = "DEBUG"
+LOGGING_FILE_FORMAT = '%(asctime)s - %(name)s - [%(levelname)s] - %(message)s'
+LOGGING_DATEFMT = '%d/%B/%Y %I:%M:%S %p'

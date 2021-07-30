@@ -2,7 +2,7 @@ import os
 import click
 from typing import Union
 from pathlib import Path
-from pgimri.dtip.dtip import *
+from pgimri.dtip.process import process_one_subject
 from pgimri.dtip.extract import extract_subject
 from pgimri.dtip.convert import convert_dicom_to_nifti
 from pgimri.dtip.locate  import locate_data_files
@@ -70,7 +70,7 @@ def locate(src_folder, dst_folder):
 @click.option('-d', '--dst_filepath', default='index.txt', show_default=True, help="path/to/file/index.txt")
 def make_index(src_filepath:str, dst_filepath:str):
     """Generate an index.txt file containing value 1 for each DTI volume"""
-    ret = generate_index_file(src_filepath, dst_filepath)
+    ret = generate_index(src_filepath, dst_filepath)
     if ret == 0:
         click.echo("Done.")
 
@@ -82,7 +82,7 @@ def make_index(src_filepath:str, dst_filepath:str):
 @click.option('-d', '--dst_filepath', default='acqparams.txt', show_default=True, help="path/to/file/acqparams.txt")
 def make_acqparams(readout_time:float, ap_pe:list, pa_pe:list, dst_filepath:str):
     """Generate the acqparams.txt file"""
-    ret = generate_acquisition_params_file(readout_time, ap_pe, pa_pe, dst_filepath)
+    ret = generate_acquisition_params(readout_time, ap_pe, pa_pe, dst_filepath)
     if ret == 0:
         click.echo("Done.")
 
@@ -103,15 +103,15 @@ def make_nodif(src_filepath:str, dst_filepath:str):
 
 
 @cli.command()
-@click.argument('subject_path', type=click.Path(exists=True))
-@click.option("-o", "--output_folder", default="./dtip_outputs", show_default=True, help="folder location to save outputs.")
-@click.option("-nm", "--nifti_method", type=click.Choice(['auto', 'dcm2nii', 'dcm2niix', 'dicom2nifti'], case_sensitive=False), default="auto", show_default=True, help="dcm2niix is Mricron's subpackage. dicom2nifti is python package.")
-def process_subject(subject_path, output_folder, nifti_method):
+@click.argument('input_path', type=click.Path(exists=True))
+@click.option("-o", "--output_path", default="./dtip_output", show_default=True, help="folder location to save output files.")
+@click.option("-nm", "--nifti_method", type=click.Choice(['auto', 'dcm2nii', 'dcm2niix', 'dicom2nifti'], case_sensitive=False), default="auto", show_default=True, help="`auto` uses dcm2niix and dcm2nii to get best data and metadata. `dcm2niix` is Mricron's subpackage. `dcm2nii` is the previous version of dcm2niix. `dicom2nifti` is python package.")
+def process_subject(input_path, output_path, nifti_method):
     """Perform DTI processing on one subject.
 
-        SUBJECT_PATH - path to subject folder or zip file.
+        INPUT_PATH - path to subject folder or zip file.
     """
-    process_one_subject(subject_path, output_folder,nifti_method=nifti_method)
+    process_one_subject(input_path, output_path, nifti_method=nifti_method)
     # click.echo(click.format_filename(subject_path))
 
 

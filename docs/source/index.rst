@@ -14,6 +14,8 @@ Welcome to PGI-MRI's documentation!
 
    installation
 
+   modules
+
 
 
 Indices and tables

@@ -21,6 +21,7 @@ __all__ = [
 
 def get_logger(name: str, log_level=LOG_LEVEL,
                to_file: str = LOG_FILENAME, file_log_level=FILE_LOG_LEVEL) -> logging.Logger:
+    """A wrapper to create a logger with console and file handlers."""
     echo_kwargs = {
         'error': dict(err=True),
         'exception': dict(err=True),
@@ -46,9 +47,8 @@ def get_logger(name: str, log_level=LOG_LEVEL,
     if to_file != '':
         fh = logging.FileHandler(to_file)
         fh.setLevel(file_log_level)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - [%(levelname)s] - %(message)s',
-            datefmt='%d/%B/%Y %I:%M:%S %p')
+        formatter = logging.Formatter(LOGGING_FILE_FORMAT,
+                                      datefmt=LOGGING_DATEFMT)
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
@@ -57,16 +57,42 @@ def get_logger(name: str, log_level=LOG_LEVEL,
 
 # ============================== CLASSES ==============================
 class SpinCursor:
-    def __init__(self, desc="Loading...", end="Done!", cursor_type="bar", timeout=0.1):
-        """
-        A loader-like context manager
-        source: https://stackoverflow.com/questions/22029562/python-how-to-make-simple-animated-loading-while-process-is-running
+    """A waiting animation when program is being executed. 
+
+        `reference source (stackoverflow) <https://stackoverflow.com/questions/22029562/python-how-to-make-simple-animated-loading-while-process-is-running>`_ 
 
         Args:
-            desc (str, optional): The loader's description. Defaults to "Loading...".
-            end (str, optional): Final print. Defaults to "Done!".
-            timeout (float, optional): Sleep time between prints. Defaults to 0.1.
+            desc : The loader's description. Defaults to "Loading...".
+            end : Final print. Defaults to "Done!".
+            cursor_type : Set the animation type. Choose one out of
+                'bar', 'spin', or 'django'.
+            timeout : Sleep time between prints. Defaults to 0.1.
+
+        Example:
+            Using *with* context:
+
+            .. code-block:: python
+
+                with SpinCursor("Running...", end=f"done!!"):
+                    subprocess.run(['ls', '-l'])
+                    time.sleep(10)
+
+            Using normal code:
+
+            .. code-block:: python
+
+                cursor = SpinCursor("Running...", end=f"done!!")
+                cursor.start()
+                subprocess.run(['ls', '-l'])
+                time.sleep(10)
+                cursor.stop()
+
+        Returns: 
+            Nothing
         """
+
+    def __init__(self, desc:str="Loading...", end:str="Done!", cursor_type:str="bar", timeout:float=0.1) -> None:
+
         self.desc = desc
         self.end = end
         self.timeout = timeout
@@ -96,6 +122,7 @@ class SpinCursor:
         self.done = False
 
     def start(self):
+        """Start the animation. See example above."""
         self._thread.start()
         return self
 
@@ -110,6 +137,7 @@ class SpinCursor:
         self.start()
 
     def stop(self):
+        """Stop animation. See example above."""
         self.done = True
         cols = get_terminal_size((80, 20)).columns
         print("\r" + " " * cols, end="", flush=True)
