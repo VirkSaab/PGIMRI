@@ -18,7 +18,7 @@ Future versions will include:
 4. Functional MRI (fMRI)
 
 .. important::
-    This is not a complete solution and might not work out of the box but you can use it as a reference if you are new to DKI, DTI, MRSI, and fMRI image processing. I created this tool to automate some operations which are redundant for multiple subjects.
+    This is not a complete solution and might not work out of the box but you can use it as a reference if you are new to DKI, DTI, MRSI, or fMRI image processing. I created this tool to automate some operations which are redundant for multiple subjects.
 
 
 Check out the :doc:`installation` tab to install this package.

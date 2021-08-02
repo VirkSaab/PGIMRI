@@ -22,36 +22,32 @@ from pgimri.dtip.locate import locate_data_files
 from pgimri.dtip.generate import *
 
 
-__all__ = ["process_one_subject", "process_multi_subjects"]
+__all__ = [
+    "process_one_subject", "process_multi_subjects",
+    "run_topup", "run_eddy", "run_dtifit"
+]
 
 rich_traceback_install()  # For better trackback display
 logger = get_logger(__name__)
 
 
-def run_dtifit(input_path: Union[str, Path],
-               brain_mask_path: Union[str, Path],
-               bvecs_path: Union[str, Path],
-               bvals_path: Union[str, Path],
-               output_path: Union[str, Path]) -> int:
-    """Perform tensor fitting for the given DTI data.
-    """
-
-    with SpinCursor("Running dtifit...", end=f"Saved at `{output_path}`"):
-        subprocess.run([
-            "dtifit",
-            f"--data={input_path}",
-            f"--mask={brain_mask_path}",
-            f"--bvecs={bvecs_path}",
-            f"--bvals={bvals_path}",
-            f"--out={output_path}"
-        ])
-
-    return 0
-
-
 def run_topup(input_path: Union[str, Path],
               acqp_path: Union[str, Path],
               output_path: Union[str, Path]) -> int:
+    """Perform TOPUP distortions correction step for the given 
+        nifti (.nii.gz) DTI data.
+
+    Args:
+        input_path: compressed NIfTI (.nii.gz) file path.
+        acqp_path: acquisition parameters file path.
+        output_path: path/to/save/folder/output basename. For example, 
+            `output_path=data/corrected/topup_b0`. Then, the output files will 
+            `topup_b0_fieldcoef.nii.gz`, `topup_b0_iout.nii.gz`, 
+            `topup_b0_fout.nii.gz`, and `topup_b0_movepar.txt`.
+
+    Returns:
+        exit code 0 if completed successfully.
+    """
 
     iout_output_path = f"{output_path}_iout"
     fout_output_path = f"{output_path}_fout"
@@ -80,6 +76,34 @@ def run_eddy(input_path: Union[str, Path],
              json_path: Union[str, Path] = None,
              flm: str = "quadratic",
              fwhm: int = 0, shelled: bool = False) -> int:
+    """Perform eddy currents distortion correction step for the given 
+        nifti (.nii.gz) DTI data.
+
+    Args:
+        input_path: compressed NIfTI (.nii.gz) file path. Usually, after 
+            topup corrections.
+        brain_mask_path: path/to/binary_brain_mask.nii.gz.
+        index_path: path/to/index.txt file.
+        acqp_path: path/to/acqparams.txt.
+        bvecs_path: path/to/bvectors.bvec.
+        bvals_path: path/to/bvalues.bval.
+        topup_path: path/to/topup base name. 
+            For example, topup_b0<some name>.<.nii.gz or .txt>
+        output_path: path/to/save/folder/output basename. 
+            For example, `output_path=processed_data/eddy_unwarped_images`.
+            Then, the output files will `eddy_unwarped_images.nii.gz`, 
+            `eddy_unwarped_images.eddy_parameters`, 
+            `eddy_unwarped_images.eddy_command_txt`, etc.
+        json_path: Name of .json text file with information about slice timing.
+            N.B. --json and --slspec are mutually exclusive.
+        flm: First level EC model (movement/linear/quadratic/cubic, default quadratic)
+        fwhm: FWHM for conditioning filter when estimating the parameters (default 0)
+        shelled: Assume, don't check, that data is shelled (default false)
+
+            
+    Returns:
+        exit code 0 if completed successfully.
+    """
 
     with SpinCursor("Running eddy...", end=f"Saved at `{output_path}`"):
         command = [
@@ -107,6 +131,40 @@ def run_eddy(input_path: Union[str, Path],
     return 0
 
 
+def run_dtifit(input_path: Union[str, Path],
+               brain_mask_path: Union[str, Path],
+               bvecs_path: Union[str, Path],
+               bvals_path: Union[str, Path],
+               output_path: Union[str, Path]) -> int:
+    """Perform tensor fitting for the given DTI data.
+
+    Args:
+        input_path: compressed NIfTI (.nii.gz) file path containing 4D DTI 
+        data. Usually, after topup and eddy current corrections.
+        brain_mask_path: bet brain binary mask file path.
+        bvecs_path: path/to/bvectors.bvec.
+        bvals_path: path/to/bvalues.bval.
+        output_path: path/to/save/folder/output basename. For example, 
+            `output_path=data/dtifitted/dti`. The output files will be named 
+            as `dti_FA.nii.gz`, `dti_MD.nii.gz`, `dti_V1.nii.gz`, etc.
+
+    Returns:
+        exit code 0 if completed successfully.
+    """
+
+    with SpinCursor("Running dtifit...", end=f"Saved at `{output_path}`"):
+        subprocess.run([
+            "dtifit",
+            f"--data={input_path}",
+            f"--mask={brain_mask_path}",
+            f"--bvecs={bvecs_path}",
+            f"--bvals={bvals_path}",
+            f"--out={output_path}"
+        ])
+
+    return 0
+
+
 def process_one_subject(input_path: Union[str, Path],
                         output_path: Union[str, Path],
                         nifti_method: str = "auto",
@@ -114,14 +172,7 @@ def process_one_subject(input_path: Union[str, Path],
                         reorient: bool = True) -> int:
     """Process DTI data for one subject.
 
-    The steps involved in this pipeline are:
-
-    0. Extract data from subject's zip file, if input is a zip file.
-    1. convert DICOM files to NIfTI.
-    2. locate relevant DTI data and metadata files and saved them separately.
-    3. TOPUP - Susceptibility-induced distortions corrections. Also, generate acqparams.txt and b0.nii.gz files from existing data to perform this step.
-    4. EDDY - Eddy currents corrections. This step will also generate averaged b0 and brain mask NifTI files from existing data to perform this step.
-    5. DTIFIT - fitting diffusion tensors
+    The steps involved in this pipeline are mentioned above.
 
     Args:
         input_path: path to subject's zip file or folder containing DICOM files.
@@ -136,6 +187,18 @@ def process_one_subject(input_path: Union[str, Path],
     Returns:
         exit code 0 upon successful execution. 
         Otherwise, throws corresponding error
+
+    Example:
+
+        .. code-block:: bash
+
+            $ ls data/DTI/raw_data
+            'subject1.zip'
+            'subject2.zip'
+            'subject3.zip'
+            ...
+
+            $ dtip process-subject -o data/DTI/processed_data data/DTI/raw_data/subject1.zip
     """
 
     input_path, output_path = Path(input_path), Path(output_path)
@@ -312,6 +375,8 @@ def process_multi_subjects(input_path: Union[str, Path],
                            reorient: bool = True) -> int:
     """Process DTI data for multiple subjects.
 
+    The steps involved in this pipeline are mentioned above.
+
     Args:
         input_path: path to subjects data where each subject's data can be
             zip file or folder containing DICOM files.
@@ -326,6 +391,18 @@ def process_multi_subjects(input_path: Union[str, Path],
     Returns:
         exit code 0 upon successful execution.
         Otherwise, throws corresponding error
+
+    Example:
+
+        .. code-block:: bash
+
+            $ ls data/DTI/raw_data
+            'subject1.zip'
+            'subject2.zip'
+            'subject3.zip'
+            ...
+
+            $ dtip process-subjects -o data/DTI/processed_data data/DTI/raw_data
     """
 
     input_path, output_path = Path(input_path), Path(output_path)
@@ -334,7 +411,8 @@ def process_multi_subjects(input_path: Union[str, Path],
     subjects_paths = list(input_path.glob("*"))
     total_subjects = len(subjects_paths)
     for i, subject_path in enumerate(subjects_paths):
-        logger.info(f"{'='*15}[{i}/{total_subjects}] Processing `{subject_path}`{'='*15}")
+        logger.info(
+            f"{'='*15}[{i}/{total_subjects}] Processing `{subject_path}`{'='*15}")
         # Run processing steps for each subject
         try:
             exit_code = process_one_subject(input_path=subject_path,
@@ -348,9 +426,7 @@ def process_multi_subjects(input_path: Union[str, Path],
                 _msg = f"Error in processing subject `{subject_path}`"
                 logger.error(_msg)
                 raise RuntimeError(_msg)
-        
+
         except:
             _msg = f"Error in processing subject `{subject_path}`"
             logger.error(_msg)
-
-
