@@ -24,9 +24,8 @@ from pgimri.dtip.generate import *
 
 __all__ = ["process_one_subject", "process_multi_subjects"]
 
-rich_traceback_install() # For better trackback display
+rich_traceback_install()  # For better trackback display
 logger = get_logger(__name__)
-
 
 
 def run_dtifit(input_path: Union[str, Path],
@@ -34,6 +33,8 @@ def run_dtifit(input_path: Union[str, Path],
                bvecs_path: Union[str, Path],
                bvals_path: Union[str, Path],
                output_path: Union[str, Path]) -> int:
+    """Perform tensor fitting for the given DTI data.
+    """
 
     with SpinCursor("Running dtifit...", end=f"Saved at `{output_path}`"):
         subprocess.run([
@@ -93,8 +94,9 @@ def run_eddy(input_path: Union[str, Path],
             f"--topup={topup_path}",
             f"--flm={flm}",
             f"--out={output_path}",
-            "--estimate_move_by_susceptibility", # Estimate how susceptibility field changes with subject movement
-            "--repol" # Detect and replace outlier slices
+            # Estimate how susceptibility field changes with subject movement
+            "--estimate_move_by_susceptibility",
+            "--repol"  # Detect and replace outlier slices
             # "--mporder=16" # Not implemented for CPU
         ]
         if json_path:
@@ -113,7 +115,7 @@ def process_one_subject(input_path: Union[str, Path],
     """Process DTI data for one subject.
 
     The steps involved in this pipeline are:
-    
+
     0. Extract data from subject's zip file, if input is a zip file.
     1. convert DICOM files to NIfTI.
     2. locate relevant DTI data and metadata files and saved them separately.
@@ -163,6 +165,8 @@ def process_one_subject(input_path: Union[str, Path],
         _msg = f"Given path `{input_path}` is neither a zip file nor a folder."
         raise ValueError(_msg)
 
+    logger.debug("Removing spaces from subject name, if any.")
+    subject_name = subject_name.replace(' ', '_')
     logger.debug(
         f"Using first folder `{subject_name}` as subject name for further processing.")
 
@@ -171,8 +175,8 @@ def process_one_subject(input_path: Union[str, Path],
     # Create new folder to store nifti files
     nifti_path = output_path/f"1_nifti/{subject_name}"
     exit_code = convert_dicom_to_nifti(datapath, nifti_path, method=nifti_method,
-       compression=compression, reorient=reorient)
-    if exit_code != 0: # Stop here if any error
+                                       compression=compression, reorient=reorient)
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `convert_dicom_to_nifti` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
@@ -197,8 +201,9 @@ def process_one_subject(input_path: Union[str, Path],
     # * Step 3: TOPUP - Susceptibility-induced Distortions Corrections.
     # Create b0 file from the dwidata. Choose a volume without diffusion weighting (e.g. the first volume).
     b0_path = interm_path/"b0.nii.gz"
-    exit_code = generate_b0_from_dti(selected_files_dict[".nii.gz"], output_path=b0_path)
-    if exit_code != 0: # Stop here if any error
+    exit_code = generate_b0_from_dti(
+        selected_files_dict[".nii.gz"], output_path=b0_path)
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `generate_b0_from_dti` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
@@ -207,7 +212,7 @@ def process_one_subject(input_path: Union[str, Path],
     # Create acquisition parameters file
     acqp_path = interm_path/"acqparams.txt"
     exit_code = generate_acquisition_params(output_path=acqp_path)
-    if exit_code != 0: # Stop here if any error
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `generate_acquisition_params` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
@@ -217,7 +222,7 @@ def process_one_subject(input_path: Union[str, Path],
     logger.debug("Running topup...")
     topup_output_path = interm_path/"topup_b0"
     exit_code = run_topup(b0_path, acqp_path, output_path=topup_output_path)
-    if exit_code != 0: # Stop here if any error
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `run_topup` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
@@ -226,28 +231,30 @@ def process_one_subject(input_path: Union[str, Path],
     # * Step 4: EDDY - Eddy currents corrections.
     # compute the average image of the corrected b0 volumes
     topup_iout_path = topup_output_path.parent/"topup_b0_iout"
-    avg_b0_path = interm_path/"hifi_b0"
-    exit_code = generate_avg_b0(topup_iout_path, avg_b0_path)
-    if exit_code != 0: # Stop here if any error
+    b0_avg_path = interm_path/"b0_avg"
+    exit_code = generate_avg_b0(topup_iout_path, b0_avg_path)
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `generate_avg_b0` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
-    logger.info(f"Created avg b0 file at `{avg_b0_path}`.")
+    logger.info(f"Created avg b0 file at `{b0_avg_path}`.")
 
     # use BET on the averaged b0. create a binary brain mask, with a fraction
     # intensity threshold of 0.2.
-    brain_mask_path = interm_path/"hifi_b0_brain"
-    exit_code = generate_brain_mask(avg_b0_path, brain_mask_path)
-    if exit_code != 0: # Stop here if any error
+    brain_mask_path = interm_path/"b0_avg"
+    exit_code = generate_brain_mask(b0_avg_path, brain_mask_path)
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `generate_brain_mask` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
+    brain_mask_path = f"{brain_mask_path}_mask"
     logger.info(f"Created b0 brain mask file at `{brain_mask_path}`.")
 
     # Create index.txt file
     index_path = interm_path/"index.txt"
-    exit_code = generate_index(selected_files_dict[".nii.gz"], output_path=index_path)
-    if exit_code != 0: # Stop here if any error
+    exit_code = generate_index(
+        selected_files_dict[".nii.gz"], output_path=index_path)
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `generate_index` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
@@ -257,17 +264,18 @@ def process_one_subject(input_path: Union[str, Path],
     eddy_output_path = interm_path/"eddy_unwarped_images"
     logger.debug("Running eddy...")
     exit_code = run_eddy(input_path=selected_files_dict[".nii.gz"],
-             brain_mask_path=brain_mask_path,
-             index_path=index_path,
-             acqp_path=acqp_path,
-             bvecs_path=selected_files_dict[".bvec"],
-             bvals_path=selected_files_dict[".bval"],
-             topup_path=topup_output_path,
-             output_path=eddy_output_path,
-             json_path=None # Multiband info (Getting `SliceTiming` error)
-    )
+                         brain_mask_path=brain_mask_path,
+                         index_path=index_path,
+                         acqp_path=acqp_path,
+                         bvecs_path=selected_files_dict[".bvec"],
+                         bvals_path=selected_files_dict[".bval"],
+                         topup_path=topup_output_path,
+                         output_path=eddy_output_path,
+                         # Multiband info (Getting `SliceTiming` error)
+                         json_path=None
+                         )
     logger.warning(">> ADD EDDY QC <<")
-    if exit_code != 0: # Stop here if any error
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `run_eddy` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
@@ -279,19 +287,70 @@ def process_one_subject(input_path: Union[str, Path],
     fit_output_path = processed_path/"dti"
     logger.debug("Running dtifit...")
     exit_code = run_dtifit(selected_files_dict[".nii.gz"],
-               brain_mask_path,
-               bvecs_path=selected_files_dict[".bvec"],
-               bvals_path=selected_files_dict[".bval"],
-               output_path=fit_output_path)
-    if exit_code != 0: # Stop here if any error
+                           brain_mask_path,
+                           bvecs_path=selected_files_dict[".bvec"],
+                           bvals_path=selected_files_dict[".bval"],
+                           output_path=fit_output_path)
+    if exit_code != 0:  # Stop here if any error
         _msg = "Error in `run_dtifit` execution :(. Stopped."
         logger.error(_msg)
         raise RuntimeError(_msg)
     logger.debug("done.")
 
     # Sanity check
+    logger.warning("Implement sanity checks after preprocessing.")
 
     logger.info(f"The output files are saved at `{processed_path}`")
 
-
     return 0
+
+
+def process_multi_subjects(input_path: Union[str, Path],
+                           output_path: Union[str, Path],
+                           nifti_method: str = "auto",
+                           compression: bool = True,
+                           reorient: bool = True) -> int:
+    """Process DTI data for multiple subjects.
+
+    Args:
+        input_path: path to subjects data where each subject's data can be
+            zip file or folder containing DICOM files.
+        output_path: folder location where outputs will be saved.
+        nifti_method: select a DICOM to NIfTI conversion method. Choose one of
+            the following conversion methods: `auto` (whichever works best for
+            each subject), `dicom2nifti` (python package), `dcm2nii` (MRICron),
+            and `dcm2niix` (newer version of dcm2nii). [default: `auto`]
+        compression: compress .nii to .nii.gz
+        reorient: reorient the dicoms according to LAS orientation.
+
+    Returns:
+        exit code 0 upon successful execution.
+        Otherwise, throws corresponding error
+    """
+
+    input_path, output_path = Path(input_path), Path(output_path)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    subjects_paths = list(input_path.glob("*"))
+    total_subjects = len(subjects_paths)
+    for i, subject_path in enumerate(subjects_paths):
+        logger.info(f"{'='*15}[{i}/{total_subjects}] Processing `{subject_path}`{'='*15}")
+        # Run processing steps for each subject
+        try:
+            exit_code = process_one_subject(input_path=subject_path,
+                                            output_path=output_path,
+                                            nifti_method=nifti_method,
+                                            compression=compression,
+                                            reorient=reorient)
+            if exit_code == 0:
+                logger.info(f"Proessing completed for `{subject_path}`.")
+            else:
+                _msg = f"Error in processing subject `{subject_path}`"
+                logger.error(_msg)
+                raise RuntimeError(_msg)
+        
+        except:
+            _msg = f"Error in processing subject `{subject_path}`"
+            logger.error(_msg)
+
+

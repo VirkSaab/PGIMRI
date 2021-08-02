@@ -2,7 +2,7 @@ import os
 import click
 from typing import Union
 from pathlib import Path
-from pgimri.dtip.process import process_one_subject
+from pgimri.dtip.process import process_one_subject, process_multi_subjects
 from pgimri.dtip.extract import extract_subject
 from pgimri.dtip.convert import convert_dicom_to_nifti
 from pgimri.dtip.locate  import locate_data_files
@@ -12,6 +12,7 @@ from pgimri.dtip.generate import *
 def cli():
     """
     Diffusion Tensor Imaging (DTI) Processing tool.
+    This tool is created for Phillips MRI scanner DICOM data format. The data is acquired by dual-echo FSE. Other method is opposite phase encoding acqusition (create AP and PA images).
     """
 
 
@@ -115,14 +116,18 @@ def process_subject(input_path, output_path, nifti_method):
     # click.echo(click.format_filename(subject_path))
 
 
-
 @cli.command()
-@click.argument('datadir', type=click.Path(exists=True))
-def process_subjects(datadir):
-    """Perform DTI processing on multiple subjects"""
+@click.argument('input_path', type=click.Path(exists=True))
+@click.option("-o", "--output_path", default="./dtip_output", show_default=True, help="folder location to save output files.")
+@click.option("-nm", "--nifti_method", type=click.Choice(['auto', 'dcm2nii', 'dcm2niix', 'dicom2nifti'], case_sensitive=False), default="auto", show_default=True, help="`auto` uses dcm2niix and dcm2nii to get best data and metadata. `dcm2niix` is Mricron's subpackage. `dcm2nii` is the previous version of dcm2niix. `dicom2nifti` is python package.")
+def process_subjects(input_path, output_path, nifti_method):
+    """Perform DTI processing on one subject.
 
-    # click.echo(click.format_filename(datadir))
-    pass
+        INPUT_PATH - path to subjects folder containing each subjects DICOM data in a folder or zip file.
+    """
+    process_multi_subjects(input_path, output_path, nifti_method=nifti_method)
+    # click.echo(click.format_filename(subject_path))
+
 
 
 if __name__ == '__main__':

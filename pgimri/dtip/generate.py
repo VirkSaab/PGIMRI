@@ -110,7 +110,7 @@ def generate_index(input_path: Union[str, Path],
 
 
 def generate_avg_b0(input_path: Union[str, Path],
-                    output_path: Union[str, Path] = 'hifi_b0') -> int:
+                    output_path: Union[str, Path] = 'b0') -> int:
     # With `fslmaths` command
     with SpinCursor("Creating averaged b0...", end=f"Saved at `{output_path}`"):
         subprocess.run(['fslmaths', input_path, '-Tmean', output_path])
@@ -118,12 +118,12 @@ def generate_avg_b0(input_path: Union[str, Path],
 
 
 def generate_brain_mask(input_path: Union[str, Path],
-                        output_path: Union[str, Path] = 'hifi_b0_brain', 
+                        output_path: Union[str, Path] = 'b0_brain', 
                         f_value: float = 0.2) -> int:
     # With `fslmaths` command
     with SpinCursor("Creating brain mask...", end=f"Saved at `{output_path}`"):
         subprocess.run([
-            'bet2', input_path, output_path, 
+            'bet', input_path, output_path, 
             '-m', '-f', str(f_value)
         ])
     return 0
