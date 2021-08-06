@@ -67,3 +67,12 @@ def get_parent_folder(path:Union[str, Path]) -> str:
             logger.error(_msg)
             raise Exception(_msg)        
     return name
+
+
+
+############################# QUESTIONS
+# 1. Is there a problem with the dataset? Yes DICOM headers have some problems.
+# 2. There are tutorials aviable on opposite phase encoding. Like before eddy current we need to do topup or distortion correction. How to do that with dual echo planar data? - no answer
+# 4. how to fix cut out skull? - Can't do anything
+# 3. Which template to use for registration of DTI data? - MNI
+# 

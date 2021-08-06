@@ -119,12 +119,15 @@ def make_nodif(src_filepath: str, dst_filepath: str):
 @click.argument('input_path', type=click.Path(exists=True))
 @click.option("-o", "--output_path", default="./dtip_output", show_default=True, help="folder location to save output files.")
 @click.option("-nm", "--nifti_method", type=click.Choice(['auto', 'dcm2nii', 'dcm2niix', 'dicom2nifti'], case_sensitive=False), default="auto", show_default=True, help="`auto` uses dcm2niix and dcm2nii to get best data and metadata. `dcm2niix` is Mricron's subpackage. `dcm2nii` is the previous version of dcm2niix. `dicom2nifti` is python package.")
-def process_subject(input_path, output_path, nifti_method):
+@click.option('--strip_skull/--no-strip_skull', default=True, show_default=True, help="Perform skull stripping on DTI data. This step will be performed on eddy corrected DTI data.")
+def process_subject(input_path, output_path, nifti_method, strip_skull):
     """Perform DTI processing on one subject.
 
         INPUT_PATH - path to subject folder or zip file.
     """
-    process_one_subject(input_path, output_path, nifti_method=nifti_method)
+    process_one_subject(input_path, output_path, 
+                        nifti_method=nifti_method,
+                        strip_skull=strip_skull)
     # click.echo(click.format_filename(subject_path))
 
 

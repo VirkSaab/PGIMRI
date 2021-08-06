@@ -31,6 +31,29 @@ rich_traceback_install()  # For better trackback display
 logger = get_logger(__name__)
 
 
+def dti_skull_strip(input_path: Union[str, Path], 
+                    output_path: Union[str, Path],
+                    f_value: float = 0.2):
+    """Perform skull stripping on 4D DTI data using BET (with -F flag)
+
+    Args:
+        input_path: compressed NIfTI (.nii.gz) 4D DTI data file path.
+        output_path: path/to/save/DTI.nii.gz.
+        f_value: fractional intensity threshold (0->1); [default: 0.2];
+            smaller values give larger brain outline estimates
+
+    Returns:
+        exit code 0 if successfully executed.
+    """
+    output_path = str(output_path)
+    if output_path.endswith(".nii.gz"):
+        output_path = output_path.replace(".nii.gz", '')
+
+    subprocess.run([
+        'bet', f'{input_path}', f'{output_path}', '-f', str(f_value), '-F'
+    ])
+    return 0
+
 def run_topup(input_path: Union[str, Path],
               acqp_path: Union[str, Path],
               output_path: Union[str, Path]) -> int:
@@ -100,7 +123,7 @@ def run_eddy(input_path: Union[str, Path],
         fwhm: FWHM for conditioning filter when estimating the parameters (default 0)
         shelled: Assume, don't check, that data is shelled (default false)
 
-            
+
     Returns:
         exit code 0 if completed successfully.
     """
@@ -168,6 +191,7 @@ def run_dtifit(input_path: Union[str, Path],
 def process_one_subject(input_path: Union[str, Path],
                         output_path: Union[str, Path],
                         nifti_method: str = "auto",
+                        strip_skull: bool = True,
                         compression: bool = True,
                         reorient: bool = True) -> int:
     """Process DTI data for one subject.
@@ -181,6 +205,8 @@ def process_one_subject(input_path: Union[str, Path],
             the following conversion methods: `auto` (whichever works best for
             each subject), `dicom2nifti` (python package), `dcm2nii` (MRICron),
             and `dcm2niix` (newer version of dcm2nii). [default: `auto`]
+        strip_skull: Whether to remove the skull or not. BET will be used for
+            this step[default: True]
         compression: compress .nii to .nii.gz
         reorient: reorient the dicoms according to LAS orientation.
 
@@ -271,7 +297,7 @@ def process_one_subject(input_path: Union[str, Path],
         logger.error(_msg)
         raise RuntimeError(_msg)
     logger.info(f"Created b0 file at `{b0_path}`.")
-
+    
     # Create acquisition parameters file
     acqp_path = interm_path/"acqparams.txt"
     exit_code = generate_acquisition_params(output_path=acqp_path)
@@ -344,6 +370,12 @@ def process_one_subject(input_path: Union[str, Path],
         raise RuntimeError(_msg)
     logger.debug("done.")
 
+    # If True, Strip skull of eddy corrected 4D DTI data using BET with -F flag
+    if strip_skull:
+        logger.info(f"Striping skull of DTI eddy corrected data...")
+        dti_skull_strip(eddy_output_path, eddy_output_path)
+        logger.info("done.")
+
     # * Step 5: DTIFIT - fitting diffusion tensors
     processed_path = output_path/f"3_processed/{subject_name}"
     processed_path.mkdir(parents=True, exist_ok=True)
@@ -362,7 +394,6 @@ def process_one_subject(input_path: Union[str, Path],
 
     # Sanity check
     logger.warning("Implement sanity checks after preprocessing.")
-
     logger.info(f"The output files are saved at `{processed_path}`")
 
     return 0

@@ -1,5 +1,9 @@
 export PYTHONPATH=$PYTHONPATH:pgimri
 
+# WX tools for jupyter notebook with FSL
+# sudo apt-get install python-wxtools
+
+
 # Check if the script is working
 # python pgimri/dtip/dtip.py --help
 
