@@ -206,7 +206,7 @@ def process_one_subject(input_path: Union[str, Path],
             each subject), `dicom2nifti` (python package), `dcm2nii` (MRICron),
             and `dcm2niix` (newer version of dcm2nii). [default: `auto`]
         strip_skull: Whether to remove the skull or not. BET will be used for
-            this step[default: True]
+            this step with -F flag for 4D data processing[default: True]
         compression: compress .nii to .nii.gz
         reorient: reorient the dicoms according to LAS orientation.
 
@@ -381,8 +381,11 @@ def process_one_subject(input_path: Union[str, Path],
     processed_path.mkdir(parents=True, exist_ok=True)
     fit_output_path = processed_path/"dti"
     logger.debug("Running dtifit...")
-    exit_code = run_dtifit(selected_files_dict[".nii.gz"],
-                           brain_mask_path,
+
+    eddy_corrected_dti = str(eddy_output_path).replace(".nii.gz", "")
+    eddy_corrected_dti_mask = f"{eddy_corrected_dti}_mask"
+    exit_code = run_dtifit(eddy_corrected_dti,
+                           eddy_corrected_dti_mask,
                            bvecs_path=selected_files_dict[".bvec"],
                            bvals_path=selected_files_dict[".bval"],
                            output_path=fit_output_path)
@@ -402,6 +405,7 @@ def process_one_subject(input_path: Union[str, Path],
 def process_multi_subjects(input_path: Union[str, Path],
                            output_path: Union[str, Path],
                            nifti_method: str = "auto",
+                           strip_skull: bool = True,
                            compression: bool = True,
                            reorient: bool = True) -> int:
     """Process DTI data for multiple subjects.
@@ -416,6 +420,8 @@ def process_multi_subjects(input_path: Union[str, Path],
             the following conversion methods: `auto` (whichever works best for
             each subject), `dicom2nifti` (python package), `dcm2nii` (MRICron),
             and `dcm2niix` (newer version of dcm2nii). [default: `auto`]
+        strip_skull: Whether to remove the skull or not. BET will be used for
+            this step with -F flag for 4D data processing[default: True]
         compression: compress .nii to .nii.gz
         reorient: reorient the dicoms according to LAS orientation.
 
@@ -449,6 +455,7 @@ def process_multi_subjects(input_path: Union[str, Path],
             exit_code = process_one_subject(input_path=subject_path,
                                             output_path=output_path,
                                             nifti_method=nifti_method,
+                                            strip_skull=strip_skull,
                                             compression=compression,
                                             reorient=reorient)
             if exit_code == 0:
