@@ -6,10 +6,11 @@
     0. Extract data from subject's zip file, if input is a zip file.
     1. convert DICOM files to NIfTI.
     2. locate relevant DTI data and metadata files and saved them separately.
-    3. TOPUP - Susceptibility-induced distortions corrections. Also, generate acqparams.txt and b0.nii.gz files from existing data to perform this step.
+    3. DWI denoising using `dwidenoise` command from MRtrix3 package and TOPUP - Susceptibility-induced distortions corrections. Also, generate acqparams.txt and b0.nii.gz files from existing data to perform this step.
     4. EDDY - Eddy currents corrections. This step will also generate averaged b0 and brain mask NifTI files from existing data to perform this step.
     5. DTIFIT - fitting diffusion tensors
 """
+
 
 import subprocess
 from typing import Union
@@ -29,6 +30,22 @@ __all__ = [
 
 rich_traceback_install()  # For better trackback display
 logger = get_logger(__name__)
+
+def dwi_denoise(input_path: Union[str, Path], output_path: Union[str, Path]):
+    """This runs MRtrix3's dwidenoise command to remove noise from DWI data.
+    
+    dMRI noise level estimation and denoising using Marchenko-Pastur PCA
+
+    Args:
+        input_path: compressed NIfTI (.nii.gz) 4D raw DTI data file path which needs to be denoised.
+        output_path: path/to/save/DTI_data.nii.gz.
+
+    Returns:
+        exit code 0 if successfully executed.
+    """
+
+    subprocess.run(["dwidenoise", input_path, output_path])
+    return 0
 
 
 def dti_skull_strip(input_path: Union[str, Path], 
@@ -97,10 +114,10 @@ def run_eddy(input_path: Union[str, Path],
              topup_path: Union[str, Path],
              output_path: Union[str, Path] = "eddy_unwarped_images",
              json_path: Union[str, Path] = None,
-             flm: str = "quadratic",
+             flm: str = "linear",
              fwhm: int = 0, shelled: bool = False) -> int:
     """Perform eddy currents distortion correction step for the given 
-        nifti (.nii.gz) DTI data.
+        nifti (.nii.gz) DTI data. Internally runs FSL's eddy command.
 
     Args:
         input_path: compressed NIfTI (.nii.gz) file path. Usually, after 
@@ -287,8 +304,24 @@ def process_one_subject(input_path: Union[str, Path],
     logger.info(f"Files saved at `{interm_path}`.")
     logger.debug("done.")
 
-    # * Step 3: TOPUP - Susceptibility-induced Distortions Corrections.
-    # Create b0 file from the dwidata. Choose a volume without diffusion weighting (e.g. the first volume).
+    # * Step 3: DWI denoising using `dwidenoise` command from MRtrix3 package
+    # * and TOPUP - Susceptibility-induced Distortions Corrections.
+    # Denoise using dwidenoise command
+    logger.debug("Denoising DTI data...")
+    _dti_filename = selected_files_dict['.nii.gz'].name
+    denoised_filepath = interm_path/f"denoised_{_dti_filename}"
+    exit_code = dwi_denoise(selected_files_dict[".nii.gz"], denoised_filepath)
+    if exit_code != 0:  # Stop here if any error
+        _msg = "Error in `dwi_denoise` execution :(. Stopped."
+        logger.error(_msg)
+        raise RuntimeError(_msg)
+    logger.info(f"Saved denoised data file at `{denoised_filepath}`.")
+    # use denoised data for further steps
+    selected_files_dict[".nii.gz"] = denoised_filepath
+    logger.debug("done.")
+
+    # Create b0 file from the dwidata. Choose a volume without diffusion
+    # weighting (e.g. the first volume).
     b0_path = interm_path/"b0.nii.gz"
     exit_code = generate_b0_from_dti(
         selected_files_dict[".nii.gz"], output_path=b0_path)
@@ -360,8 +393,7 @@ def process_one_subject(input_path: Union[str, Path],
                          bvals_path=selected_files_dict[".bval"],
                          topup_path=topup_output_path,
                          output_path=eddy_output_path,
-                         # Multiband info (Getting `SliceTiming` error)
-                         json_path=None
+                         json_path=None # Multiband info (Getting `SliceTiming` error)
                          )
     logger.warning(">> ADD EDDY QC <<")
     if exit_code != 0:  # Stop here if any error
