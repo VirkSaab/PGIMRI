@@ -1,0 +1,17 @@
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/10_1/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/10_2/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/11_1/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/11_2/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/1_1/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/1_2/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/4_2/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/5_1/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/5_2/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/6_1/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/6_2/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/7_1/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/7_2/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/8_1/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/8_2/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/9_1/dti_dtitk.nii.gz
+/media/virk/MyEHDD/PGI_ITC_PROCESSED/3_processed/9_2/dti_dtitk.nii.gz

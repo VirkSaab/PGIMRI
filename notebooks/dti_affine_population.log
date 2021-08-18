@@ -1,0 +1,8 @@
+command:  mean_initial.nii.gz subjects.txt EDS 3
+Wed 18 Aug 2021 03:29:37 PM IST
+dti_affine_population iteration 1
+Similarity = 1.02652e+06
+dti_affine_population iteration 2
+Similarity = 21718.1
+dti_affine_population iteration 3
+Similarity = 10412.6
