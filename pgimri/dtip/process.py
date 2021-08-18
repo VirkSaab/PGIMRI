@@ -21,6 +21,7 @@ from pgimri.dtip.extract import extract_subject
 from pgimri.dtip.convert import convert_dicom_to_nifti
 from pgimri.dtip.locate import locate_data_files
 from pgimri.dtip.generate import *
+from pgimri.config import PROCESSED_DTI_FILENAME
 
 
 __all__ = [
@@ -411,7 +412,7 @@ def process_one_subject(input_path: Union[str, Path],
     # * Step 5: DTIFIT - fitting diffusion tensors
     processed_path = output_path/f"3_processed/{subject_name}"
     processed_path.mkdir(parents=True, exist_ok=True)
-    fit_output_path = processed_path/"dti"
+    fit_output_path = processed_path/PROCESSED_DTI_FILENAME
     logger.debug("Running dtifit...")
 
     eddy_corrected_dti = str(eddy_output_path).replace(".nii.gz", "")
@@ -437,6 +438,7 @@ def process_one_subject(input_path: Union[str, Path],
 def process_multi_subjects(input_path: Union[str, Path],
                            output_path: Union[str, Path],
                            nifti_method: str = "auto",
+                           exclude_list: list = [],
                            strip_skull: bool = True,
                            compression: bool = True,
                            reorient: bool = True) -> int:
@@ -452,6 +454,7 @@ def process_multi_subjects(input_path: Union[str, Path],
             the following conversion methods: `auto` (whichever works best for
             each subject), `dicom2nifti` (python package), `dcm2nii` (MRICron),
             and `dcm2niix` (newer version of dcm2nii). [default: `auto`]
+        exclude_list: add the name of the subjects you do not want to process in the folder.
         strip_skull: Whether to remove the skull or not. BET will be used for
             this step with -F flag for 4D data processing[default: True]
         compression: compress .nii to .nii.gz
@@ -477,9 +480,12 @@ def process_multi_subjects(input_path: Union[str, Path],
     input_path, output_path = Path(input_path), Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    subjects_paths = list(input_path.glob("*"))
+    subjects_paths, error_list = list(input_path.glob("*")), []
     total_subjects = len(subjects_paths)
-    for i, subject_path in enumerate(subjects_paths):
+    for i, subject_path in enumerate(subjects_paths, start=1):
+        if (subject_path.stem in exclude_list) and (len(exclude_list) != 0):
+            logger.info(f"Subject {subject_path} is in the excluded list. Skipped.")
+            continue
         logger.info(
             f"{'='*15}[{i}/{total_subjects}] Processing `{subject_path}`{'='*15}")
         # Run processing steps for each subject
@@ -499,4 +505,14 @@ def process_multi_subjects(input_path: Union[str, Path],
 
         except:
             _msg = f"Error in processing subject `{subject_path}`"
+            error_list.append(subject_path)
             logger.error(_msg)
+
+    if error_list:
+        print("="*10, "Subjects with Errors", "="*10)
+        for es in error_list:
+            print(es)
+        print("="*40)
+    else:
+        print("="*30)
+        print("All subjects completed without errors.")

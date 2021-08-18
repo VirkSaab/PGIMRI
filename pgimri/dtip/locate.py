@@ -68,7 +68,11 @@ def locate_data_files(input_path: Union[str, Path],
     logger.warning("TWO KEYS? .nii and .nii.gz, how to merge?")
     for idx, f in enumerate(files_dict[".nii.gz"]):
         img = nib.load(input_path/f)
-        z, y, z, t = img.shape
+        if len(img.shape) != 4:
+            files_dict[".nii.gz"].pop(idx)
+            continue
+        # print("IMG SHAPE =", img.shape, f)
+        x, y, z, t = img.shape
         # Check if file has desired diffusion dimesion.
         if t != N_DTI_VOLUMES: # Remove DTI files if volumes are more or less.
             files_dict[".nii.gz"].pop(idx)
@@ -111,12 +115,21 @@ def locate_data_files(input_path: Union[str, Path],
         file for file in series_dict[best_series]
         if file.endswith(".nii.gz") and file.startswith("x")
     ]
+
     # if no `x` type data file found then choose any one .nii.gz file.
+    # print("BEFORE =", selected_files)
     if len(selected_files) == 0:
         selected_files = [
             file for file in series_dict[best_series]
             if file.endswith(".nii.gz")
-        ][0]
+        ]
+    # print("BEFORE1 =", selected_files)
+    if len(selected_files) > 1:
+        selected_files = [selected_files[0]]
+    elif len(selected_files) == 0:
+        raise ValueError("No matching DTI volume found.")
+    
+    # print("AFTER =", selected_files)
     # Add rest of the metadata files
     for file in series_dict[best_series]:
             if not file.endswith(".nii.gz"):

@@ -16,7 +16,9 @@ rich_traceback_install()  # Pretty traceback
 @click.group()
 def cli():
     """
-    Diffusion Tensor Imaging (DTI) Processing tool.
+    Diffusion Tensor Imaging (DTI) Processing tool. This tool is a part of
+    PGIMRI package.
+
     This tool is created for Phillips MRI scanner DICOM data format. The data is acquired by dual-echo FSE. Other method is opposite phase encoding acqusition (create AP and PA images).
     """
 
@@ -136,15 +138,25 @@ def process_subject(input_path, output_path, nifti_method, strip_skull):
 @click.option("-o", "--output_path", default="./dtip_output", show_default=True, help="folder location to save output files.")
 @click.option("-nm", "--nifti_method", type=click.Choice(['auto', 'dcm2nii', 'dcm2niix', 'dicom2nifti'], case_sensitive=False), default="auto", show_default=True, help="`auto` uses dcm2niix and dcm2nii to get best data and metadata. `dcm2niix` is Mricron's subpackage. `dcm2nii` is the previous version of dcm2niix. `dicom2nifti` is python package.")
 @click.option('--strip_skull/--no-strip_skull', default=True, show_default=True, help="Perform skull stripping on DTI data. This step will be performed on eddy corrected DTI data.")
-def process_subjects(input_path, output_path, nifti_method, strip_skull):
+@click.option("-ex", "--exclude", type=str, default='', show_default=True, help="pass a .txt file with the subject names you do not want to process in the given folder. Add one subject name per line.")
+def process_subjects(input_path, output_path, nifti_method, strip_skull, exclude):
     """Perform DTI processing on one subject.
 
         INPUT_PATH - path to subjects folder containing each subjects DICOM data in a folder or zip file.
     """
+    if exclude:
+        with open(exclude) as ef:
+            exclude_list = ef.read().split("\n")
+            exclude_list = [n for n in exclude_list if n]
+            # print(exclude_list)
+    else:
+        exclude_list = []
     process_multi_subjects(input_path, output_path,
                            nifti_method=nifti_method,
-                           strip_skull=strip_skull)
-    # click.echo(click.format_filename(subject_path))
+                           strip_skull=strip_skull,
+                           exclude_list=exclude_list)
+
+    # click.echo(click.format_filename(input_path))
 
 
 if __name__ == '__main__':
