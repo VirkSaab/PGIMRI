@@ -26,6 +26,7 @@ make html
 # To automatically generate HTML updates: follow these instructions - https://sublime-and-sphinx-guide.readthedocs.io/en/latest/build.html#automatically-generate-html-updates
 
 # DTI-TK installation. Make sure dtitk is present with DTI-TK binary files
+# export DTITK_ROOT=/home/virk/devs/WorkProjects/PGI/PGIMRI/dtitk
 export DTITK_ROOT=$PWD/dtitk
 export PATH=${PATH}:${DTITK_ROOT}/bin:${DTITK_ROOT}/utilities:${DTITK_ROOT}/scripts
 which VolumeInfo

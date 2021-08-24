@@ -95,6 +95,10 @@ def locate_data_files(input_path: Union[str, Path],
                 series_dict[series].append(f)
 
     # Get series which has left maximum number of files
+    if not series_dict:
+        _msg = f"No DTI specific files found related to {DTI_FILENAMES_LIST}."
+        _msg += f" Please check manually."
+        raise RuntimeError(_msg)
     best_series = max(series_dict, key=lambda k: len(series_dict[k]))
     if len(series_dict) > 1:
         logger.info(f"Selecting series number {series} out of {list(series_dict.keys())} series.")

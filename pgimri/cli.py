@@ -62,7 +62,8 @@ logger = get_logger("pgimri_main")
 def cli():
     """Welcome to PGI-MRI CLI tool.
 
-        This CLI is a Python wrapper for ``dcm2nii``
+        This CLI is a Python wrapper heavily based on FSL, DTI-TK, and dcm2nii.
+        The sole purpose of this tool is to automate the processing and registering pipeline for multiple subjects. This is not a fully automated tool. Manual inspection of data is required to ensure the quality of each subject.
         This tool supports two MR modalities:
         
         1. DKI - Diffusion Kurtosis Imaging
