@@ -8,7 +8,7 @@ from pgimri.dtip.extract import extract_subject
 from pgimri.dtip.convert import convert_dicom_to_nifti
 from pgimri.dtip.locate import locate_data_files
 from pgimri.dtip.generate import *
-from pgimri.dtip.register import dtitk_register
+from pgimri.dtip.register import *
 
 rich_traceback_install()  # Pretty traceback
 
@@ -106,7 +106,7 @@ def make_acqparams(readout_time: float, ap_pe: list, pa_pe: list, output_path: s
 @cli.command()
 @click.argument('input_path', type=click.Path(exists=True))
 @click.option('-d', '--output_path', default='b0_nodif.nii.gz', show_default=True, help="path/to/file/b0_nodif.nii.gz")
-def make_nodif(input_path: str, output_path: str):
+def make_b0(input_path: str, output_path: str):
     """From the DTI 4D data, choose a volume without diffusion weighting 
     (e.g. the first volume). You can now extract this as a standalone 3D image,
     using `fslroi` command. This function runs the `fslroi` command internally.
@@ -165,7 +165,7 @@ def process_multi(input_path, output_path, nifti_method, strip_skull, exclude):
 @cli.command()
 @click.argument('input_path', type=click.Path(exists=True))
 @click.option('-o', '--output_path', default='./register_output', show_default=True, help="path/to/processed/subject_folder")
-def register(input_path: str, output_path: str):
+def register_multi(input_path: str, output_path: str):
     """Perform image registeration on the given subject using DTI-TK toolkit.
 
     Args:
@@ -175,7 +175,7 @@ def register(input_path: str, output_path: str):
     Returns:
         exit code 0 on successful execution.
     """
-    ret = dtitk_register(input_path, output_path)
+    ret = dtitk_register_multi(input_path, output_path)
     if ret == 0:
         click.echo("Done.")
 

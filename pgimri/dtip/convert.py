@@ -1,12 +1,18 @@
 import os
+import shutil
 import subprocess
 import dicom2nifti
 from typing import Union, Tuple
 from pathlib import Path
 from pgimri.utils import get_logger, SpinCursor
 from pgimri.config import *
+from rich.progress import track
 
 logger = get_logger(__name__)
+
+__all__ = [
+    "convert_dicom_to_nifti", "fsl_to_dtitk_multi",
+]
 
 
 def convert_dicom_to_nifti(input_path: Union[str, Path],
@@ -54,6 +60,7 @@ def convert_dicom_to_nifti(input_path: Union[str, Path],
         raise NotImplementedError(_msg)
 
     return 0
+
 
 def method_dcm2nii(input_path: Union[str, Path],
                    output_path: Union[str, Path],
@@ -150,3 +157,33 @@ def method_dicom2nifti(input_path: Union[str, Path],
         except:
             logger.error("Error occurred at `method_dicom2nifti` function")
             return 1
+
+
+def fsl_to_dtitk_multi(input_path: Union[Path, str],
+                       output_path: Union[Path, str]) -> int:
+    """Convert FSL to DTI-TK specific format
+    Args:
+        input_path: folder path containing subjects' data.
+
+    """
+    input_path, output_path = Path(input_path), Path(output_path)
+
+    subjects = list(Path(input_path).glob("*"))
+    total_subjects = len(subjects)
+    for i, subject_path in enumerate(subjects, start=1):
+        basename = f"{subject_path}/{PROCESSED_DTI_FILENAME}"
+        subprocess.run(["fsl_to_dtitk", basename])
+        print(f"[{i}/{total_subjects}] Converted `{subject_path}`.")
+
+        # Move output files to `output_path`
+        move_to = output_path/subject_path.stem
+        move_to.mkdir(parents=True, exist_ok=True)
+        # print("MOVED HERE =", move_to)
+        dtitk_basename = f"{PROCESSED_DTI_FILENAME}_dtitk"
+        for dtitk_filepath in Path(subject_path).glob("*"):
+            if str(dtitk_filepath.stem).startswith(dtitk_basename):
+                # print("FILE =", dtitk_filepath.name)
+                shutil.move(dtitk_filepath, move_to/dtitk_filepath.name)
+    
+    print("Done!")
+    return 0 # exit code 0 for successful execution.

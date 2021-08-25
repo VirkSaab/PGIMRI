@@ -2,10 +2,136 @@
     http://dti-tk.sourceforge.net/pmwiki/pmwiki.php?n=Documentation.Interoperability
 """
 
+import os
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Union
+from pgimri.config import *
+from pgimri.utils import *
+from pgimri.dtip.convert import fsl_to_dtitk_multi
+from rich.traceback import install as rich_traceback_install
 
-def dtitk_register():
+
+rich_traceback_install()  # For better trackback display
+logger = get_logger(__name__)
+
+__all__ = ["dtitk_register_multi"]
+
+@show_exec_time
+def dtitk_register_multi(input_path: Union[Path, str],
+                         output_path: Union[Path, str]) -> int:
     """DTI Image Registration using Diffusion Tensor Imaging ToolKit (DTI-TK)
 
+    Args:
+        input_path: folder path containing subjects' data.
+        output_path: location to save the output files.
 
+    Returns:
+        exit code 0 on completion.
     """
-    pass
+    input_path, output_path = Path(input_path), Path(output_path)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    #* Add dtitk tool to PATH
+    dtitk_maindir = f"{Path(__file__).parent.parent.parent}/dtitk"
+    os.environ["DTITK_ROOT"] = dtitk_maindir
+    os.environ["PATH"] += f":{dtitk_maindir}/bin:{dtitk_maindir}/utilities:{dtitk_maindir}/scripts"
+
+    #* Step 1: Convert FSL format to DTI-TK format and move files 
+    #* to `output_path`.
+    exit_code = fsl_to_dtitk_multi(input_path, output_path)
+    if exit_code != 0:  # Stop here if any error
+        _msg = "Error in `dtitk_register_multi` execution :(. Stopped."
+        logger.error(_msg)
+        raise RuntimeError(_msg)
+    logger.debug(f"Converted `{input_path}` to DTI-TK format and saved at `{output_path}`.")
+
+    #* SPATIAL NORMALIZATION AND ATLAS CONSTRUCTION
+    #* Step 2. Bootstrapping the initial DTI template from the input DTI volumes
+    # copy good aligned scans to create an initial template
+    copied_files = []
+    logger.debug(f"Copying these files for bootstrap template {copied_files}")
+    for subject_path in output_path.glob('*'):
+        if subject_path.stem in BEST_POPULATION_SUBSET:
+            filename = f"{PROCESSED_DTI_FILENAME}_dtitk.nii.gz"
+            filepath = f"{subject_path}/{filename}"
+            dst = f"{subject_path.stem}_{filename}"
+            copied_files.append(dst)
+            shutil.copy2(filepath, dst)
+    logger.debug("Copied!")
+
+    # Create a file with subset names
+    with open("subset.txt", "w") as subf:
+        for filename in copied_files:
+            subf.write(f"{filename}\n")
+            
+    # create the initial bootstrapped template with the subset data
+    logger.debug(f"Creating bootstrap template using {copied_files}")
+    # template_path = output_path/"mean_initial.nii.gz" #! USE THIS FOR DIFFERENT LOCATION
+    template_path = "mean_initial.nii.gz"
+    subprocess.run(['TVMean', '-in', 'subset.txt', '-out', template_path])
+    logger.debug(f"Created bootstrap template @ `{template_path}`.")
+
+    # remove copied files
+    logger.debug("Removing copied files...")
+    for filename in copied_files:
+        subprocess.run(['rm', filename])
+    subprocess.run(['rm', 'subset.txt'])
+    logger.debug("Removed.")
+
+    #* Step 3: Rigid Alignment of DTI Volumes
+    # in the context of spatial normalization, the goal is to align a set
+    # of DTI volumes
+    logger.debug("Starting Rigid Alignment of DTI Volumes...")
+    with open("subjects.txt", "w") as sjf:
+        for subject_path in output_path.glob("*"):
+            if subject_path.is_dir():
+                filename = f"{PROCESSED_DTI_FILENAME}_dtitk.nii.gz"
+                filepath = f"{subject_path}/{filename}"
+                print(filepath)
+                sjf.write(f"{filepath}\n")
+    logger.debug("Created subjects.txt file for `dti_rigid_population` command.")
+    
+    subprocess.run([
+        'dti_rigid_population', template_path, 'subjects.txt', 'EDS', str(NUM_ALIGN_ITERS)
+    ])
+    logger.debug("Done!")
+
+    # Check new affine volumes
+    for subject_path in Path(output_path).glob("*"):
+        if subject_path.is_dir():
+            filepath = subject_path/f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
+            if not filepath.exists():
+                _msg = f"`{filepath}` not found at `{subject_path}`."
+                _msg += "Make sure `dti_rigid_population` command ran correctly."
+                _msg += " Check its log."
+                raise RuntimeError(_msg)
+
+    #* Step 4: Affine alignment with template refinement
+    logger.debug("Affine alignment with template refinement...")
+    subprocess.run([
+        'dti_affine_population', template_path, 'subjects.txt', 'EDS', str(NUM_ALIGN_ITERS)
+    ])
+    logger.debug("Done!")
+    
+    #* Step 5: Deformable alignment with template refinement
+    # generate the mask image
+    logger.debug("Generating mask...")    
+    subprocess.run(['TVtool', '-in', f'mean_affine{NUM_ALIGN_ITERS}.nii.gz', '-tr'])
+    subprocess.run([
+        'BinaryThresholdImageFilter', f'mean_affine{NUM_ALIGN_ITERS}_tr.nii.gz', 'mask.nii.gz',
+        '0.01', '100', '1', '0'
+    ])
+    logger.warning("Really important to check that the mask is appropriate before embarking on the next most time-consuming step.")
+    logger.debug("Done!")
+
+    # Run alignment
+    logger.debug("Deformable alignment with template refinement...")
+    subprocess.run([
+        'dti_diffeomorphic_population', f'mean_affine{NUM_ALIGN_ITERS}.nii.gz',
+        'subjects_aff.txt', 'mask.nii.gz', '0.002'
+    ])
+    logger.debug("Done!")
+
+    return 0

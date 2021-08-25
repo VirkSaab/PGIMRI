@@ -2,6 +2,7 @@ import logging
 import logging.config
 import click_logging
 import time
+from typing import Callable, Any
 from itertools import cycle
 from shutil import get_terminal_size
 from threading import Thread
@@ -13,7 +14,10 @@ __all__ = [
     "get_logger",
 
     # Classes
-    "SpinCursor"
+    "SpinCursor",
+
+    # Decorators
+    "show_exec_time",
 ]
 
 # ================================== FUNCTIONS ###############################
@@ -146,3 +150,47 @@ class SpinCursor:
     def __exit__(self, exc_type, exc_value, tb):
         # handle exceptions with those variables ^
         self.stop()
+
+
+# ============================== DECORATORS ==============================
+def show_exec_time(func: Callable) -> Any:
+    """Display the execution time of a function.
+
+        Example:
+
+            .. code-block:: python
+
+                @show_exec_time
+                def take_a_break(timeout=10):
+                    time.sleep(timeout)
+
+                >>> take_a_break()            
+                >>> => Completed in 10 secs.
+    """
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+
+        # Run the given function
+        results = func(*args, **kwargs)
+
+        end_time = time.time()
+
+        secs, mins, hrs = 0, 0, 0
+        # output time in seconds
+        if end_time - start_time < 60:
+            secs = int((end_time - start_time) % 60)
+            print(f"\n>> Completed in {secs} secs <<\n")
+        # output time in minutes
+        elif (end_time - start_time >= 60) and (end_time - start_time) < 3600:
+            mins = int((end_time - start_time) / 60)
+            secs = int((end_time - start_time) % 60)
+            print(f"\n>> Completed in {mins}:{secs} mins <<\n")
+        # output time in hours
+        else:
+            hrs = int((end_time - start_time) / 3600)
+            mins = int((end_time - start_time) / 60)
+            secs = int((end_time - start_time) % 60)
+            print(f"\n>> Completed in {hrs}:{mins}:{secs} hrs <<\n")
+
+        return results
+    return wrapper

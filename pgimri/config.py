@@ -25,6 +25,15 @@ READOUT_TIME =  0.05
 # http://dti-tk.sourceforge.net/pmwiki/pmwiki.php?n=Documentation.Diffusivity
 DTITK_UODMF = 1000 # UNIT OF DIFFUSIVITY MULTIPICATION FACTOR
 
+# To perform bootstrap without an existing template, manually select a subset
+# of subjects (5 or so) with good alignment among them. Below is the list of 
+# folder names of good aligned subjects. Manually visualize the DTI volumes
+# and add there names here
+BEST_POPULATION_SUBSET = ['1_1', '1_2', '6_1', '7_2', '9_2', '11_1']
+
+# Number of iterations for `dti_rigid_population` and `dti_affine_population` commands for image registration.
+NUM_ALIGN_ITERS = 5
+
 
 # Logging settings, Either CRITICAL, ERROR, WARNING, INFO or DEBUG.
 LOG_FILENAME = "ITC_DTI_processing_logs.log" # Set to `None` if you do not want to create a log file.
