@@ -1,3 +1,5 @@
+.PHONY: help process_all
+
 help:	## Show the help.
 	@echo "Usage: make <target>"
 	@echo ""

@@ -29,10 +29,17 @@ DTITK_UODMF = 1000 # UNIT OF DIFFUSIVITY MULTIPICATION FACTOR
 # of subjects (5 or so) with good alignment among them. Below is the list of 
 # folder names of good aligned subjects. Manually visualize the DTI volumes
 # and add there names here
-BEST_POPULATION_SUBSET = ['1_1', '1_2', '6_1', '7_2', '9_2', '11_1']
+BEST_POPULATION_SUBSET = [
+    '1_1', '6_1', '11_1',
+    # '1_2', '7_2', '9_2',
+]
 
 # Number of iterations for `dti_rigid_population` and `dti_affine_population` commands for image registration.
 NUM_ALIGN_ITERS = 5
+
+# resample the template into a voxel space with the voxel dimensions being powers of 2
+TEMPLATE_SPATIAL_DIMS = [128, 128, 64]
+TEMPLATE_VOXEL_SPACE = [1.5, 1.75, 2.25]
 
 
 # Logging settings, Either CRITICAL, ERROR, WARNING, INFO or DEBUG.

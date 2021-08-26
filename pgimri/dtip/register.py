@@ -68,11 +68,19 @@ def dtitk_register_multi(input_path: Union[Path, str],
             
     # create the initial bootstrapped template with the subset data
     logger.debug(f"Creating bootstrap template using {copied_files}")
-    # template_path = output_path/"mean_initial.nii.gz" #! USE THIS FOR DIFFERENT LOCATION
     template_path = "mean_initial.nii.gz"
     subprocess.run(['TVMean', '-in', 'subset.txt', '-out', template_path])
     logger.debug(f"Created bootstrap template @ `{template_path}`.")
-
+    # resample the template into a voxel space with the voxel dimensions 
+    # being powers of 2
+    logger.info("Resampling template into a voxel space with the voxel dimensions being powers of 2")
+    W, H, D = [str(v) for v in TEMPLATE_SPATIAL_DIMS]
+    X, Y, Z = [str(v) for v in TEMPLATE_VOXEL_SPACE ]
+    subprocess.run([
+        'TVResample', '-in', template_path, '-align', 'center', '-size',
+        W, H, D, '-vsize', X, Y, Z
+    ])
+    logger.info("Done!")
     # remove copied files
     logger.debug("Removing copied files...")
     for filename in copied_files:
@@ -83,7 +91,7 @@ def dtitk_register_multi(input_path: Union[Path, str],
     #* Step 3: Rigid Alignment of DTI Volumes
     # in the context of spatial normalization, the goal is to align a set
     # of DTI volumes
-    logger.debug("Starting Rigid Alignment of DTI Volumes...")
+    logger.info("Starting Rigid Alignment of DTI Volumes...")
     with open("subjects.txt", "w") as sjf:
         for subject_path in output_path.glob("*"):
             if subject_path.is_dir():
@@ -96,7 +104,7 @@ def dtitk_register_multi(input_path: Union[Path, str],
     subprocess.run([
         'dti_rigid_population', template_path, 'subjects.txt', 'EDS', str(NUM_ALIGN_ITERS)
     ])
-    logger.debug("Done!")
+    logger.info("Done!")
 
     # Check new affine volumes
     for subject_path in Path(output_path).glob("*"):
@@ -109,29 +117,52 @@ def dtitk_register_multi(input_path: Union[Path, str],
                 raise RuntimeError(_msg)
 
     #* Step 4: Affine alignment with template refinement
-    logger.debug("Affine alignment with template refinement...")
+    logger.info("Affine alignment with template refinement...")
     subprocess.run([
         'dti_affine_population', template_path, 'subjects.txt', 'EDS', str(NUM_ALIGN_ITERS)
     ])
-    logger.debug("Done!")
+    logger.info("Done!")
     
     #* Step 5: Deformable alignment with template refinement
     # generate the mask image
-    logger.debug("Generating mask...")    
+    logger.info("Generating mask...")    
     subprocess.run(['TVtool', '-in', f'mean_affine{NUM_ALIGN_ITERS}.nii.gz', '-tr'])
     subprocess.run([
         'BinaryThresholdImageFilter', f'mean_affine{NUM_ALIGN_ITERS}_tr.nii.gz', 'mask.nii.gz',
         '0.01', '100', '1', '0'
     ])
     logger.warning("Really important to check that the mask is appropriate before embarking on the next most time-consuming step.")
-    logger.debug("Done!")
+    logger.info("Done!")
 
     # Run alignment
-    logger.debug("Deformable alignment with template refinement...")
+    logger.info("Deformable alignment with template refinement...")
     subprocess.run([
         'dti_diffeomorphic_population', f'mean_affine{NUM_ALIGN_ITERS}.nii.gz',
         'subjects_aff.txt', 'mask.nii.gz', '0.002'
     ])
-    logger.debug("Done!")
+    logger.info("Done!")
+
+    # Move extra generated files to output_path folder
+    logger.info(f"Moving all generated files to `{output_path}`")
+    for filename in Path('.').glob("*"):
+        if filename.is_file():
+            filename = str(filename)
+            # collect NIfTI mean files
+            if filename.startswith('mean_') and filename.endswith('.nii.gz'):
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+            # collect mask file
+            if filename == "mask.nii.gz":
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+            # collect subjects
+            if filename.startswith('subjects') and filename.endswith('.txt'):
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+            # collect affine and diffeo text files
+            if filename == "affine.txt" or filename == "diffeo.txt":
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+    logger.info("Done!")
 
     return 0
