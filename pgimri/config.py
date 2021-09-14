@@ -37,6 +37,8 @@ BEST_POPULATION_SUBSET = [
 # Number of iterations for `dti_rigid_population` and `dti_affine_population` commands for image registration.
 NUM_ALIGN_ITERS = 5
 
+X_SIZE, Y_SIZE, Z_SIZE = 128, 128, 64
+
 # resample the template into a voxel space with the voxel dimensions being powers of 2
 TEMPLATE_SPATIAL_DIMS = [128, 128, 64]
 TEMPLATE_VOXEL_SPACE = [1.5, 1.75, 2.25]

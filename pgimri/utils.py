@@ -165,7 +165,7 @@ def show_exec_time(func: Callable) -> Any:
                     time.sleep(timeout)
 
                 >>> take_a_break()            
-                >>> => Completed in 10 secs.
+                >>> >> Completed in 00h:00m:10s <<
     """
     def wrapper(*args, **kwargs):
         start_time = time.time()
@@ -175,22 +175,16 @@ def show_exec_time(func: Callable) -> Any:
 
         end_time = time.time()
 
-        secs, mins, hrs = 0, 0, 0
-        # output time in seconds
-        if end_time - start_time < 60:
-            secs = int((end_time - start_time) % 60)
-            print(f"\n>> Completed in {secs} secs <<\n")
-        # output time in minutes
-        elif (end_time - start_time >= 60) and (end_time - start_time) < 3600:
-            mins = int((end_time - start_time) / 60)
-            secs = int((end_time - start_time) % 60)
-            print(f"\n>> Completed in {mins}:{secs} mins <<\n")
-        # output time in hours
-        else:
-            hrs = int((end_time - start_time) / 3600)
-            mins = int((end_time - start_time) / 60)
-            secs = int((end_time - start_time) % 60)
-            print(f"\n>> Completed in {hrs}:{mins}:{secs} hrs <<\n")
+        hrs = (end_time - start_time) // 3600
+        rem = (end_time - start_time) % 3600
+        mins = rem // 60
+        secs = rem % 60
+
+        hrs = str(round(hrs)).zfill(2)
+        mins = str(round(mins)).zfill(2)
+        secs = str(round(secs)).zfill(2)
+
+        print(f"\n>> Completed in {hrs}h:{mins}m:{secs}s <<\n")
 
         return results
     return wrapper

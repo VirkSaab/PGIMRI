@@ -164,9 +164,9 @@ def process_multi(input_path, output_path, nifti_method, strip_skull, exclude):
 
 @cli.command()
 @click.argument('input_path', type=click.Path(exists=True))
-@click.option('-o', '--output_path', default='./register_output', show_default=True, help="path/to/processed/subject_folder")
-def register_multi(input_path: str, output_path: str):
-    """Perform image registeration on the given subject using DTI-TK toolkit.
+@click.option('-o', '--output_path', default='./register_pop_output', show_default=True, help="path/to/processed/subject_folder")
+def register_pop_multi(input_path: str, output_path: str):
+    """Perform population-based image registeration on the given subject using DTI-TK toolkit.
 
     Args:
         input_path: subject's preprocessed folder path. Perform `dtip process` command to process the subject before registration.
@@ -175,7 +175,27 @@ def register_multi(input_path: str, output_path: str):
     Returns:
         exit code 0 on successful execution.
     """
-    ret = dtitk_register_multi(input_path, output_path)
+    ret = dtitk_register_pop_multi(input_path, output_path)
+    if ret == 0:
+        click.echo("Done.")
+
+
+@cli.command()
+@click.argument('input_path', type=click.Path(exists=True))
+@click.argument('template_path', type=click.Path(exists=True))
+@click.option('-o', '--output_path', default='./register_output', show_default=True, help="path/to/processed/subject_folder")
+def register_multi(input_path: str, template_path: str, output_path: str):
+    """Perform image registeration using existing template on the given subject using DTI-TK toolkit.
+
+    Args:
+        input_path: subject's preprocessed folder path. Perform `dtip process` command to process the subject before registration.
+        template_path: Path of the template to use for registration.
+        output_path: location to save the registration output files.
+
+    Returns:
+        exit code 0 on successful execution.
+    """
+    ret = dtitk_register_multi(input_path, template_path, output_path)
     if ret == 0:
         click.echo("Done.")
 
