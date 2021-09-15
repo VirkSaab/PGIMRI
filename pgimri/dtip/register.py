@@ -1,5 +1,5 @@
 """This scripts includes DTI image registration and required pre and post processing to perform correct registration. I followed the official DTI-TK tutorials. The steps listed below are taken from here:
-    http://dti-tk.sourceforge.net/pmwiki/pmwiki.php?n=Documentation.Interoperability
+    http://dti-tk.sourceforge.net/pmwiki/pmwiki.php?n=Documentation.Registration
 """
 
 import os
@@ -232,19 +232,18 @@ def dtitk_register_multi(input_path: Union[Path, str],
         "dti_template_bootstrap", template_path, subs_filepath
     ])
 
-    # Move the mean_initial.nii.gz file to `output_path`
-    # template_path = output_path/"mean_initial.nii.gz"
-    # shutil.move("mean_initial.nii.gz", template_path)
-
     template_path = "mean_initial.nii.gz"
+    X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
+    XV, YV, ZV = TEMPLATE_VOXEL_SPACE
     subprocess.run([
         'TVResample', '-in', template_path,
         '-out', 'mean_initial_resampled.nii.gz',
         '-align', 'center', 
-        '-size', X_SIZE, Y_SIZE, Z_SIZE,
-        '-vsize', '1', '1', '1'
+        '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
+        '-vsize', str(XV), str(YV), str(ZV),
     ])
     template_path = 'mean_initial_resampled.nii.gz'
+    logger.info(f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
 
     # Check new affine volumes
     for subject_path in Path(output_path).glob("*"):
@@ -253,7 +252,7 @@ def dtitk_register_multi(input_path: Union[Path, str],
                 f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
             if not filepath.exists():
                 _msg = f"`{filepath}` not found at `{subject_path}`."
-                _msg += "Make sure `dti_rigid_population` command ran correctly."
+                _msg += "Make sure `dti_template_bootstrap` command ran correctly."
                 _msg += " Check its log."
                 raise RuntimeError(_msg)
 
@@ -271,6 +270,17 @@ def dtitk_register_multi(input_path: Union[Path, str],
         logger.info("Done!")
     logger.info("Affine alignment completed!")
 
+    # generate the mask image
+    logger.info("Generating mask...")
+    subprocess.run(['TVtool', '-in', template_path, '-tr', '-out', 'template_tr.nii.gz'])
+    subprocess.run([
+        'BinaryThresholdImageFilter', 'template_tr.nii.gz', 'mask.nii.gz',
+        '0.01', '100', '1', '0'
+    ])
+    logger.warning(
+        "Really important to check that the mask is appropriate before embarking on the next most time-consuming step.")
+    logger.info("Done!")
+
     # * Step 5: Deformable alignment with template refinement
     # Get subjects' DTI file paths
     for subject_path in output_path.glob("*"):
@@ -278,24 +288,12 @@ def dtitk_register_multi(input_path: Union[Path, str],
             logger.info(f"Deformable alignment of subject `{subject_path}`...")
             filename = f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
             filepath = f"{subject_path}/{filename}"
-            # generate the mask image
-            logger.info("Generating mask...")
-            # mask_path = output_path/'mask.nii.gz'
-            subprocess.run(['TVtool', '-in', template_path, '-tr', '-out', 'template_tr.nii.gz'])
-            subprocess.run([
-                'BinaryThresholdImageFilter', 'template_tr.nii.gz', 'mask.nii.gz',
-                '0.01', '100', '1', '0'
-            ])
-            logger.warning(
-                "Really important to check that the mask is appropriate before embarking on the next most time-consuming step.")
-            logger.info("Done!")
-
             # Run alignment
             logger.info("Deformable alignment with template refinement...")
             subprocess.run([
                 'dti_diffeomorphic_reg', 
                 template_path, filepath, 'mask.nii.gz',
-                '1', '6', '0.002'
+                '1', '6', '0.0002'
             ])
             logger.info("Done!")
 
