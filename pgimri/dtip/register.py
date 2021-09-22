@@ -235,14 +235,16 @@ def dtitk_register_multi(input_path: Union[Path, str],
     template_path = "mean_initial.nii.gz"
     X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
     XV, YV, ZV = TEMPLATE_VOXEL_SPACE
+    OX, OY, OZ = TEMPLATE_ORIGIN
     subprocess.run([
         'TVResample', '-in', template_path,
-        '-out', 'mean_initial_resampled.nii.gz',
+        '-out', template_path,
         '-align', 'center', 
         '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
         '-vsize', str(XV), str(YV), str(ZV),
+        '-origin', str(OX), str(OY), str(OZ),
     ])
-    template_path = 'mean_initial_resampled.nii.gz'
+    # template_path = 'mean_initial_resampled.nii.gz'
     logger.info(f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
 
     # Check new affine volumes

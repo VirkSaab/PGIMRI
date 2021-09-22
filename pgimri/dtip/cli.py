@@ -105,13 +105,14 @@ def make_acqparams(readout_time: float, ap_pe: list, pa_pe: list, output_path: s
 
 @cli.command()
 @click.argument('input_path', type=click.Path(exists=True))
-@click.option('-d', '--output_path', default='b0_nodif.nii.gz', show_default=True, help="path/to/file/b0_nodif.nii.gz")
-def make_b0(input_path: str, output_path: str):
+@click.option('-o', '--output_path', default='b0.nii.gz', show_default=True, help="path/to/file/b0.nii.gz")
+@click.option('-idx', default=0, show_default=True, help="volume index to extract.")
+def make_b0(input_path: str, output_path: str, idx: str):
     """From the DTI 4D data, choose a volume without diffusion weighting 
     (e.g. the first volume). You can now extract this as a standalone 3D image,
     using `fslroi` command. This function runs the `fslroi` command internally.
     """
-    ret = generate_b0_from_dti(input_path, output_path)
+    ret = generate_b0_from_dti(input_path, output_path, b0_idx=idx)
     if ret == 0:
         click.echo("Done.")
 
@@ -141,7 +142,7 @@ def process(input_path, output_path, nifti_method, strip_skull):
 @click.option('--strip_skull/--no-strip_skull', default=True, show_default=True, help="Perform skull stripping on DTI data. This step will be performed on eddy corrected DTI data.")
 @click.option("-ex", "--exclude", type=str, default='', show_default=True, help="pass a .txt file with the subject names you do not want to process in the given folder. Add one subject name per line.")
 def process_multi(input_path, output_path, nifti_method, strip_skull, exclude):
-    """Perform DTI processing on one subject.
+    """Perform DTI processing on multiple subjects.
 
         INPUT_PATH - path to subjects folder containing each subjects DICOM data in a folder or zip file.
     """

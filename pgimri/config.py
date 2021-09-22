@@ -38,9 +38,20 @@ BEST_POPULATION_SUBSET = [
 NUM_ALIGN_ITERS = 5
 
 # resample the template into a voxel space with the voxel dimensions being powers of 2
-TEMPLATE_SPATIAL_DIMS = [128, 128, 64]
-TEMPLATE_VOXEL_SPACE = [1.5, 1.75, 2.25]
+# TEMPLATE_SPATIAL_DIMS = [128, 128, 64]
+# TEMPLATE_VOXEL_SPACE = [1.5, 1.75, 2.25]
 
+# TEMPLATE_SPATIAL_DIMS = [256, 256, 128]
+# TEMPLATE_VOXEL_SPACE = [0.75, 1.0, 1.5]
+
+# # With Makropoulos T2 Template (128)
+# TEMPLATE_SPATIAL_DIMS = [128, 128, 64]
+# TEMPLATE_VOXEL_SPACE = [0.7891, 1.0703, 1.6875]
+# ORIGIN = [-65, 70, 25]
+# With Makropoulos T2 Template (256)
+TEMPLATE_SPATIAL_DIMS = [256, 256, 128]
+TEMPLATE_VOXEL_SPACE = [0.50, 0.50, 0.87]
+TEMPLATE_ORIGIN = [-100, 155, 50]
 
 # Logging settings, Either CRITICAL, ERROR, WARNING, INFO or DEBUG.
 LOG_FILENAME = "ITC_DTI_processing_logs.log" # Set to `None` if you do not want to create a log file.
