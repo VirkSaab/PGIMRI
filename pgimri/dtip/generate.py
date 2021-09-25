@@ -1,14 +1,16 @@
+import shutil
 import subprocess
 import nibabel as nib
 from typing import Union
 from pathlib import Path
-from pgimri.utils import SpinCursor
+from pgimri.utils import SpinCursor, show_exec_time
 from pgimri.config import *
 
 
 __all__ = [
     "generate_index", "generate_acquisition_params",
-    "generate_b0_from_dti", "generate_avg_b0", "generate_brain_mask"
+    "generate_b0_from_dti", "generate_avg_b0", "generate_brain_mask",
+    "make_initial_template_from_pop"
 ]
 
 
@@ -118,12 +120,73 @@ def generate_avg_b0(input_path: Union[str, Path],
 
 
 def generate_brain_mask(input_path: Union[str, Path],
-                        output_path: Union[str, Path] = 'b0_brain', 
+                        output_path: Union[str, Path] = 'b0_brain',
                         f_value: float = 0.2) -> int:
     # With `fslmaths` command
     with SpinCursor("Creating brain mask...", end=f"Saved at `{output_path}`"):
         subprocess.run([
-            'bet', input_path, output_path, 
+            'bet', input_path, output_path,
             '-m', '-f', str(f_value)
         ])
+    return 0
+
+@show_exec_time
+def make_initial_template_from_pop(input_path: Union[str, Path],
+                                   template_path: Union[str, Path],
+                                   output_path: Union[str, Path]):
+    """Create the initial template manually from selected subjects for ITS data.
+
+    Args:
+        input_path: folder path containing subjects' data given in `config.BEST_POPULATION_SUBSET` list. 
+        template_path: Path of the template to use for registration.
+        output_path: location to save the registration output files.
+
+    Returns:
+        exit code 0 on successful execution.
+    """
+    input_path, template_path = Path(input_path), Path(template_path)
+    orig_output_path, output_path = Path(output_path), Path(".tmp_mit")
+    output_path.mkdir(exist_ok=True)
+
+    subs_filepaths = []
+    for subject_name in BEST_POPULATION_SUBSET:
+        subject_path = input_path/subject_name
+        subprocess.run([
+            'dtip', 'register', subject_path, template_path, '-o', output_path
+        ])
+        filename = f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
+        filepath = f"{output_path/subject_name}/{filename}"
+        subs_filepaths.append(filepath)
+
+    # Create a file with subset names
+    subs_filepath = output_path/"template_subs.txt"
+    with open(subs_filepath, "w") as subf:
+        for filepath in subs_filepaths:
+            subf.write(f"{filepath}\n")
+
+    # Run the `dti_template_bootstrap` command
+    subprocess.run([
+        "dti_template_bootstrap", template_path, subs_filepath, '-SMOption', 'EDS', '4', '4', '4', '0.0001'
+    ])
+
+    X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
+    XV, YV, ZV = TEMPLATE_VOXEL_SPACE
+    OX, OY, OZ = TEMPLATE_ORIGIN
+    subprocess.run([
+        'TVResample', '-in', "mean_initial.nii.gz",
+        '-out', "mean_initial.nii.gz",
+        '-align', 'center',
+        '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
+        '-vsize', str(XV), str(YV), str(ZV),
+        '-origin', str(OX), str(OY), str(OZ),
+    ])
+    print(f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `mean_initial.nii.gz`.")
+
+    # Move the created `mean_initial.nii.gz` to output_path location
+    save_path = orig_output_path/"mean_initial_template.nii.gz"
+    shutil.move("mean_initial.nii.gz", save_path)
+    print(f"New template saved at `{save_path}`.")
+    
+    # Remove extra files generated for this template
+    shutil.rmtree(output_path)
     return 0

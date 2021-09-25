@@ -184,19 +184,62 @@ def register_pop_multi(input_path: str, output_path: str):
 @cli.command()
 @click.argument('input_path', type=click.Path(exists=True))
 @click.argument('template_path', type=click.Path(exists=True))
+@click.option('-mit', '--mean_initial_template_path', type=click.Path(exists=True), default=None, show_default=True)
 @click.option('-o', '--output_path', default='./register_output', show_default=True, help="path/to/processed/subject_folder")
-def register_multi(input_path: str, template_path: str, output_path: str):
-    """Perform image registeration using existing template on the given subject using DTI-TK toolkit.
+def register_multi(input_path: str, template_path: str, mean_initial_template_path: Union[str, None], output_path: str):
+    """Perform image registeration using existing template on the given subjects using DTI-TK toolkit.
 
     Args:
-        input_path: subject's preprocessed folder path. Perform `dtip process` command to process the subject before registration.
+        input_path: subject's preprocessed folder path. Perform `dtip process-multi` command to preprocess the subjects before registration.
+        template_path: Path of the template to use for registration.
+        mean_initial_template_path: A manually created mean_initial template using pecific subjects. This file can be created using `dtip make-template` CLI command.
+        output_path: location to save the registration output files.
+
+    Returns:
+        exit code 0 on successful execution.
+    """
+    ret = dtitk_register_multi(input_path, template_path, mean_initial_template_path, output_path)
+    if ret == 0:
+        click.echo("Done.")
+
+
+@cli.command()
+@click.argument('input_path', type=click.Path(exists=True))
+@click.argument('template_path', type=click.Path(exists=True))
+@click.option('-mit', '--mean_initial_template_path', type=click.Path(exists=True), default=None, show_default=True)
+@click.option('-o', '--output_path', default='./register_output', show_default=True, help="path/to/processed/subject_folder")
+def register(input_path: str, template_path: str, mean_initial_template_path:str, output_path: str):
+    """Perform image registeration using existing template for single subject using DTI-TK toolkit.
+
+    Args:
+        input_path: subject's preprocessed folder path. Perform `dtip process` command to preprocess the subject before registration.
         template_path: Path of the template to use for registration.
         output_path: location to save the registration output files.
 
     Returns:
         exit code 0 on successful execution.
     """
-    ret = dtitk_register_multi(input_path, template_path, output_path)
+    ret = dtitk_register(input_path, template_path, mean_initial_template_path, output_path)
+    if ret == 0:
+        click.echo("Done.")
+
+
+@cli.command()
+@click.argument('input_path', type=click.Path(exists=True))
+@click.argument('template_path', type=click.Path(exists=True))
+@click.option('-o', '--output_path', default='.', show_default=True, help="path/to/processed/subject_folder")
+def make_template(input_path: str, template_path: str, output_path: str):
+    """Create the initial template manually from selected subjects for ITS data.
+
+    Args:
+        input_path: folder path containing subjects' data given in `config.BEST_POPULATION_SUBSET` list. 
+        template_path: Path of the template to use for registration.
+        output_path: location to save the registration output files.
+
+    Returns:
+        exit code 0 on successful execution.
+    """
+    ret = make_initial_template_from_pop(input_path, template_path, output_path)
     if ret == 0:
         click.echo("Done.")
 

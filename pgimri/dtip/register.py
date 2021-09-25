@@ -16,7 +16,9 @@ from rich.traceback import install as rich_traceback_install
 rich_traceback_install()  # For better trackback display
 logger = get_logger(__name__)
 
-__all__ = ["dtitk_register_pop_multi", "dtitk_register_multi"]
+__all__ = [
+    "dtitk_register_pop_multi", "dtitk_register_multi", "dtitk_register"
+]
 
 
 @show_exec_time
@@ -180,6 +182,7 @@ def dtitk_register_pop_multi(input_path: Union[Path, str],
 @show_exec_time
 def dtitk_register_multi(input_path: Union[Path, str],
                          template_path: Union[Path, str],
+                         mean_initial_template_path: Union[Path, str, None],
                          output_path: Union[Path, str]) -> int:
     """DTI existing Template-based Image Registration using Diffusion Tensor Imaging ToolKit (DTI-TK)
 
@@ -212,7 +215,6 @@ def dtitk_register_multi(input_path: Union[Path, str],
 
     # * SPATIAL NORMALIZATION AND ATLAS CONSTRUCTION
     # * Step 2. Bootstrapping the initial DTI template from the input DTI volumes
-
     # Get subjects' DTI file paths
     subs_filepaths = []
     for subject_path in output_path.glob("*"):
@@ -227,36 +229,46 @@ def dtitk_register_multi(input_path: Union[Path, str],
         for filepath in subs_filepaths:
             subf.write(f"{filepath}\n")
 
-    # Run the `dti_template_bootstrap` command
-    subprocess.run([
-        "dti_template_bootstrap", template_path, subs_filepath
-    ])
-
-    template_path = "mean_initial.nii.gz"
     X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
     XV, YV, ZV = TEMPLATE_VOXEL_SPACE
     OX, OY, OZ = TEMPLATE_ORIGIN
-    subprocess.run([
-        'TVResample', '-in', template_path,
-        '-out', template_path,
-        '-align', 'center', 
-        '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
-        '-vsize', str(XV), str(YV), str(ZV),
-        '-origin', str(OX), str(OY), str(OZ),
-    ])
-    # template_path = 'mean_initial_resampled.nii.gz'
-    logger.info(f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
+    
+    if mean_initial_template_path == None:
+        # Run the `dti_template_bootstrap` command
+        subprocess.run([
+            "dti_template_bootstrap", template_path, subs_filepath
+        ])
 
-    # Check new affine volumes
-    for subject_path in Path(output_path).glob("*"):
-        if subject_path.is_dir():
-            filepath = subject_path / \
-                f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
-            if not filepath.exists():
-                _msg = f"`{filepath}` not found at `{subject_path}`."
-                _msg += "Make sure `dti_template_bootstrap` command ran correctly."
-                _msg += " Check its log."
-                raise RuntimeError(_msg)
+        template_path = "mean_initial.nii.gz"
+        subprocess.run([
+            'TVResample', '-in', template_path,
+            '-out', template_path,
+            '-align', 'center',
+            '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
+            '-vsize', str(XV), str(YV), str(ZV),
+            '-origin', str(OX), str(OY), str(OZ),
+        ])
+        logger.info(
+            f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
+
+        # Check new affine volumes
+        for subject_path in Path(output_path).glob("*"):
+            if subject_path.is_dir():
+                filepath = subject_path / \
+                    f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
+                if not filepath.exists():
+                    _msg = f"`{filepath}` not found at `{subject_path}`."
+                    _msg += "Make sure `dti_template_bootstrap` command ran correctly."
+                    _msg += " Check its log."
+                    raise RuntimeError(_msg)
+
+    else:
+        template_path = mean_initial_template_path
+    
+    # * Fix the origin of template to 0, 0, 0
+    subprocess.run([
+        'TVAdjustVoxelspace', '-in', template_path, '-out', template_path, '-vsize', str(XV), str(YV), str(ZV), '-origin', '0', '0', '0' 
+    ])
 
     # * Step 3: Rigid Alignment of DTI Volumes (SKIPPED AS PER INSTRUCTIONS IN THE DTI-TK TUTORIAL)
     # This step is not required when step 2 is performed with existing template.
@@ -264,17 +276,24 @@ def dtitk_register_multi(input_path: Union[Path, str],
     # * Step 4: Affine alignment with template refinement
     logger.info("Affine alignment with template refinement...")
     for i, subject_path in enumerate(subs_filepaths, start=1):
-        logger.info(f"[{i}/{len(subs_filepaths)}] Affine alignment of `{subject_path}`...")
+        logger.info(
+            f"[{i}/{len(subs_filepaths)}] Affine alignment of `{subject_path}`...")
         subprocess.run([
             'dti_affine_reg', template_path, subject_path,
-            'EDS', '4', '4', '4', '0.01', '1'
+            'EDS', '4', '4', '4', '0.01'
         ])
+        logger.info("Adjusting origin to 0, 0, 0.")
+        subprocess.run([
+            'TVAdjustVoxelspace', '-in', subject_path, '-out', subject_path, '-vsize', str(XV), str(YV), str(ZV), '-origin', '0', '0', '0' 
+        ])
+
         logger.info("Done!")
     logger.info("Affine alignment completed!")
 
     # generate the mask image
     logger.info("Generating mask...")
-    subprocess.run(['TVtool', '-in', template_path, '-tr', '-out', 'template_tr.nii.gz'])
+    subprocess.run(['TVtool', '-in', template_path,
+                   '-tr', '-out', 'template_tr.nii.gz'])
     subprocess.run([
         'BinaryThresholdImageFilter', 'template_tr.nii.gz', 'mask.nii.gz',
         '0.01', '100', '1', '0'
@@ -293,11 +312,149 @@ def dtitk_register_multi(input_path: Union[Path, str],
             # Run alignment
             logger.info("Deformable alignment with template refinement...")
             subprocess.run([
-                'dti_diffeomorphic_reg', 
+                'dti_diffeomorphic_reg',
                 template_path, filepath, 'mask.nii.gz',
                 '1', '6', '0.0002'
             ])
             logger.info("Done!")
+
+    # Move extra generated files to output_path folder
+    logger.info(f"Moving all generated files to `{output_path}`")
+    for filename in Path('.').glob("*"):
+        if filename.is_file():
+            filename = str(filename)
+            # collect NIfTI mean files
+            if filename.startswith('mean_') and filename.endswith('.nii.gz'):
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+            # collect mask file
+            if filename == "mask.nii.gz":
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+            if filename.startswith('template'):
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+    logger.info("Registration complete!")
+
+    return 0
+
+
+@show_exec_time
+def dtitk_register(input_path: Union[Path, str],
+                   template_path: Union[Path, str],
+                   mean_initial_template_path: Union[Path, str, None],
+                   output_path: Union[Path, str]) -> int:
+    """DTI existing Template-based Image Registration of single subject using Diffusion Tensor Imaging ToolKit (DTI-TK)
+
+    Args:
+        input_path: folder path containing a subject's data.
+        template_path: Path of the template to use for registration.
+        output_path: location to save the output files.
+
+    Returns:
+        exit code 0 on completion.
+    """
+    input_path, output_path = Path(input_path), Path(output_path)
+    template_path = Path(template_path)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    # * Add dtitk tool to PATH
+    dtitk_maindir = f"{Path(__file__).parent.parent.parent}/dtitk"
+    os.environ["DTITK_ROOT"] = dtitk_maindir
+    os.environ["PATH"] += f":{dtitk_maindir}/bin:{dtitk_maindir}/utilities:{dtitk_maindir}/scripts"
+
+    # * Step 1: Convert FSL format to DTI-TK format and move files
+    # * to `output_path`.
+    basename = f"{input_path}/{PROCESSED_DTI_FILENAME}"
+    subprocess.run(["fsl_to_dtitk", basename])
+
+    # Move output files to `output_path`
+    move_to = output_path/input_path.stem
+    move_to.mkdir(parents=True, exist_ok=True)
+    # print("MOVED HERE =", move_to)
+    dtitk_basename = f"{PROCESSED_DTI_FILENAME}_dtitk"
+    for dtitk_filepath in Path(input_path).glob("*"):
+        if str(dtitk_filepath.stem).startswith(dtitk_basename):
+            # print("FILE =", dtitk_filepath.name)
+            shutil.move(dtitk_filepath, move_to/dtitk_filepath.name)
+
+    logger.debug(
+        f"Converted `{input_path}` to DTI-TK format and saved at `{output_path}`.")
+
+    # * SPATIAL NORMALIZATION AND ATLAS CONSTRUCTION
+    # * Step 2. Bootstrapping the initial DTI template from the input DTI volumes
+
+    subject_path = move_to/f"{PROCESSED_DTI_FILENAME}_dtitk.nii.gz"
+
+    # Create a file with subset names
+    subs_filepath = output_path/"subs.txt"
+    with open(subs_filepath, "w") as subf:
+        subf.write(f"{subject_path}\n")
+
+    if mean_initial_template_path == None:
+        # Run the `dti_template_bootstrap` command
+        subprocess.run([
+            "dti_template_bootstrap", template_path, subs_filepath
+        ])
+        template_path = "mean_initial.nii.gz"
+
+        X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
+        XV, YV, ZV = TEMPLATE_VOXEL_SPACE
+        OX, OY, OZ = TEMPLATE_ORIGIN
+        subprocess.run([
+            'TVResample', '-in', template_path,
+            '-out', template_path,
+            '-align', 'center',
+            '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
+            '-vsize', str(XV), str(YV), str(ZV),
+            '-origin', str(OX), str(OY), str(OZ),
+        ])
+        # template_path = 'mean_initial_resampled.nii.gz'
+        logger.info(
+            f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
+    
+    else:
+        template_path = mean_initial_template_path
+
+
+    # * Step 3: Rigid Alignment of DTI Volumes (SKIPPED AS PER INSTRUCTIONS IN THE DTI-TK TUTORIAL)
+    # This step is not required when step 2 is performed with existing template.
+
+    # * Step 4: Affine alignment with template refinement
+    logger.info("Affine alignment with template refinement...")
+    subprocess.run([
+        'dti_affine_reg', template_path, subject_path,
+        'EDS', '4', '4', '4', '0.01', '1'
+    ])
+    logger.info("Affine alignment completed!")
+
+    # generate the mask image
+    logger.info("Generating mask...")
+    subprocess.run(['TVtool', '-in', template_path,
+                   '-tr', '-out', 'template_tr.nii.gz'])
+    subprocess.run([
+        'BinaryThresholdImageFilter', 'template_tr.nii.gz', 'mask.nii.gz',
+        '0.01', '100', '1', '0'
+    ])
+    logger.warning(
+        "Really important to check that the mask is appropriate before embarking on the next most time-consuming step.")
+    logger.info("Done!")
+
+    # # # * Step 5: Deformable alignment with template refinement
+    # # # Get subjects' DTI file paths
+    # # for subject_path in output_path.glob("*"):
+    # #     if subject_path.is_dir():
+    # #         logger.info(f"Deformable alignment of subject `{subject_path}`...")
+    # #         filename = f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
+    # #         filepath = f"{subject_path}/{filename}"
+    # #         # Run alignment
+    # #         logger.info("Deformable alignment with template refinement...")
+    # #         subprocess.run([
+    # #             'dti_diffeomorphic_reg',
+    # #             template_path, filepath, 'mask.nii.gz',
+    # #             '1', '6', '0.0002'
+    # #         ])
+    # #         logger.info("Done!")
 
     # Move extra generated files to output_path folder
     logger.info(f"Moving all generated files to `{output_path}`")

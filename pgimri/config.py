@@ -30,8 +30,7 @@ DTITK_UODMF = 1000 # UNIT OF DIFFUSIVITY MULTIPICATION FACTOR
 # folder names of good aligned subjects. Manually visualize the DTI volumes
 # and add there names here
 BEST_POPULATION_SUBSET = [
-    '1_1', '6_1', '11_1',
-    # '1_2', '7_2', '9_2',
+    '1_1', '1_2', '7_2', '11_1',
 ]
 
 # Number of iterations for `dti_rigid_population` and `dti_affine_population` commands for image registration.
@@ -47,11 +46,18 @@ NUM_ALIGN_ITERS = 5
 # # With Makropoulos T2 Template (128)
 # TEMPLATE_SPATIAL_DIMS = [128, 128, 64]
 # TEMPLATE_VOXEL_SPACE = [0.7891, 1.0703, 1.6875]
-# ORIGIN = [-65, 70, 25]
+# TEMPLATE_ORIGIN = [-65, 70, 25]
 # With Makropoulos T2 Template (256)
 TEMPLATE_SPATIAL_DIMS = [256, 256, 128]
 TEMPLATE_VOXEL_SPACE = [0.50, 0.50, 0.87]
 TEMPLATE_ORIGIN = [-100, 155, 50]
+
+# Try by single subject bootstrap and 
+# affine alignment with single subject as well.
+# After that, create a mean template bootstrap from
+# affined subjects to run diffeomorphic step.
+
+
 
 # Logging settings, Either CRITICAL, ERROR, WARNING, INFO or DEBUG.
 LOG_FILENAME = "ITC_DTI_processing_logs.log" # Set to `None` if you do not want to create a log file.
