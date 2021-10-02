@@ -49,8 +49,7 @@ NUM_ALIGN_ITERS = 5
 # TEMPLATE_ORIGIN = [-65, 70, 25]
 # With Makropoulos T2 Template (256)
 TEMPLATE_SPATIAL_DIMS = [256, 256, 128]
-TEMPLATE_VOXEL_SPACE = [0.50, 0.50, 0.87]
-TEMPLATE_ORIGIN = [-100, 155, 50]
+TEMPLATE_VOXEL_SPACE = [0.50, 0.50, 1.0]
 
 # Try by single subject bootstrap and 
 # affine alignment with single subject as well.

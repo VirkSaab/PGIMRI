@@ -4,14 +4,14 @@ import subprocess
 import dicom2nifti
 from typing import Union, Tuple
 from pathlib import Path
-from pgimri.utils import get_logger, SpinCursor
+from pgimri.utils import get_logger, SpinCursor, show_exec_time
 from pgimri.config import *
 from rich.progress import track
 
 logger = get_logger(__name__)
 
 __all__ = [
-    "convert_dicom_to_nifti", "fsl_to_dtitk_multi",
+    "convert_dicom_to_nifti", "fsl_to_dtitk_multi", "dtitk_to_fsl_multi"
 ]
 
 
@@ -173,7 +173,7 @@ def fsl_to_dtitk_multi(input_path: Union[Path, str],
     for i, subject_path in enumerate(subjects, start=1):
         basename = f"{subject_path}/{PROCESSED_DTI_FILENAME}"
         subprocess.run(["fsl_to_dtitk", basename])
-        print(f"[{i}/{total_subjects}] Converted `{subject_path}`.")
+        logger.info(f"[{i}/{total_subjects}] Converted `{subject_path}`.")
 
         # Move output files to `output_path`
         move_to = output_path/subject_path.stem
@@ -185,5 +185,45 @@ def fsl_to_dtitk_multi(input_path: Union[Path, str],
                 # print("FILE =", dtitk_filepath.name)
                 shutil.move(dtitk_filepath, move_to/dtitk_filepath.name)
     
-    print("Done!")
+    logger.info("Done!")
     return 0 # exit code 0 for successful execution.
+
+@show_exec_time
+def dtitk_to_fsl_multi(input_path: Union[Path, str],
+                       output_path: Union[Path, str]) -> int:
+    """Convert DTI-TK specific format to FSL
+
+        This function converts the registred files using DTI-TK back to FSL format. This function runs DTI-TK's `TVEigenSystem` command per subject and move the files to `output_path`.
+    Args:
+        input_path: folder path containing registred files in DTI-TK .nii.gz format.
+        output_path: Move the converted files to this location.
+    """
+    input_path, output_path = Path(input_path), Path(output_path)
+    subjects = [p for p in Path(input_path).glob("*") if p.is_dir()]
+    move_these = ['L1', 'L2', 'L3', 'V1', 'V2', 'V3', 'fa', 'ad', 'rd']
+    total_subjects = len(subjects)
+    for i, subject_path in enumerate(subjects, start=1):
+        basename = f"{subject_path}/{PROCESSED_DTI_FILENAME}_dtitk_aff_diffeo"
+
+        # Convert
+        registered_filename = f"{basename}.nii.gz"
+        subprocess.run([
+            'TVEigenSystem', '-in', registered_filename, '-type', 'FSL'
+        ])
+        # fractional anisotropy (FA)
+        subprocess.run(['TVtool', '-in', registered_filename, '-fa'])
+        # axial diffusivity (AD)
+        subprocess.run(['TVtool', '-in', registered_filename, '-ad'])
+        # radial diffusivity (RD)
+        subprocess.run(['TVtool', '-in', registered_filename, '-rd'])
+        # Move to `output_path`
+        savedir = output_path/subject_path.stem
+        savedir.mkdir(parents=True, exist_ok=True)
+        for fn in move_these:
+            filepath = f"{basename}_{fn}.nii.gz"
+            savepath = savedir/f"{Path(basename).stem}_{fn}.nii.gz"
+            shutil.move(filepath, savepath)
+
+        logger.info(f"[{i}/{total_subjects}] Converted and moved to `{savedir}`.")
+
+    return 0

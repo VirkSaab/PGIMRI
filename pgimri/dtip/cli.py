@@ -5,7 +5,7 @@ from pathlib import Path
 from rich.traceback import install as rich_traceback_install
 from pgimri.dtip.process import process_one_subject, process_multi_subjects
 from pgimri.dtip.extract import extract_subject
-from pgimri.dtip.convert import convert_dicom_to_nifti
+from pgimri.dtip.convert import convert_dicom_to_nifti, dtitk_to_fsl_multi
 from pgimri.dtip.locate import locate_data_files
 from pgimri.dtip.generate import *
 from pgimri.dtip.register import *
@@ -208,7 +208,8 @@ def register_multi(input_path: str, template_path: str, mean_initial_template_pa
 @click.argument('template_path', type=click.Path(exists=True))
 @click.option('-mit', '--mean_initial_template_path', type=click.Path(exists=True), default=None, show_default=True)
 @click.option('-o', '--output_path', default='./register_output', show_default=True, help="path/to/processed/subject_folder")
-def register(input_path: str, template_path: str, mean_initial_template_path:str, output_path: str):
+@click.option('--no_diffeo', is_flag=True, default=False, show_default=True)
+def register(input_path: str, template_path: str, mean_initial_template_path:str, output_path: str, no_diffeo: bool):
     """Perform image registeration using existing template for single subject using DTI-TK toolkit.
 
     Args:
@@ -219,7 +220,7 @@ def register(input_path: str, template_path: str, mean_initial_template_path:str
     Returns:
         exit code 0 on successful execution.
     """
-    ret = dtitk_register(input_path, template_path, mean_initial_template_path, output_path)
+    ret = dtitk_register(input_path, template_path, mean_initial_template_path, output_path, no_diffeo=no_diffeo)
     if ret == 0:
         click.echo("Done.")
 
@@ -240,6 +241,23 @@ def make_template(input_path: str, template_path: str, output_path: str):
         exit code 0 on successful execution.
     """
     ret = make_initial_template_from_pop(input_path, template_path, output_path)
+    if ret == 0:
+        click.echo("Done.")
+
+
+# --------------------------------- dtip > mapping module
+@cli.command()
+@click.argument('input_path', type=click.Path(exists=True))
+@click.option('-o', '--output_path', default='dtitk_to_fsl_output', show_default=True, help="path/to/processed/subject_folder")
+def dtitk_fsl_multi(input_path: str, output_path: str):
+    """Convert DTI-TK specific format to FSL
+
+        This function converts the registred files using DTI-TK back to FSL format. This function runs DTI-TK's `TVEigenSystem` command per subject and move the files to `output_path`.
+    Args:
+        input_path: folder path containing registred files in DTI-TK .nii.gz format.
+        output_path: Move the converted files to this location.
+    """
+    ret = dtitk_to_fsl_multi(input_path, output_path)
     if ret == 0:
         click.echo("Done.")
 

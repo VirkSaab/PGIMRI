@@ -4,6 +4,7 @@ import nibabel as nib
 from typing import Union
 from pathlib import Path
 from pgimri.utils import SpinCursor, show_exec_time
+from pgimri.dtip.register import dtitk_register
 from pgimri.config import *
 
 
@@ -151,9 +152,10 @@ def make_initial_template_from_pop(input_path: Union[str, Path],
     subs_filepaths = []
     for subject_name in BEST_POPULATION_SUBSET:
         subject_path = input_path/subject_name
-        subprocess.run([
-            'dtip', 'register', subject_path, template_path, '-o', output_path
-        ])
+        ret = dtitk_register(subject_path, template_path, mean_initial_template_path=None, output_path=output_path, no_diffeo=True)
+        if ret != 0:
+            raise RuntimeError("Something wrong in the registration.")
+
         filename = f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
         filepath = f"{output_path/subject_name}/{filename}"
         subs_filepaths.append(filepath)
@@ -169,18 +171,18 @@ def make_initial_template_from_pop(input_path: Union[str, Path],
         "dti_template_bootstrap", template_path, subs_filepath, '-SMOption', 'EDS', '4', '4', '4', '0.0001'
     ])
 
-    X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
-    XV, YV, ZV = TEMPLATE_VOXEL_SPACE
-    OX, OY, OZ = TEMPLATE_ORIGIN
-    subprocess.run([
-        'TVResample', '-in', "mean_initial.nii.gz",
-        '-out', "mean_initial.nii.gz",
-        '-align', 'center',
-        '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
-        '-vsize', str(XV), str(YV), str(ZV),
-        '-origin', str(OX), str(OY), str(OZ),
-    ])
-    print(f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `mean_initial.nii.gz`.")
+    # X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
+    # XV, YV, ZV = TEMPLATE_VOXEL_SPACE
+    # OX, OY, OZ = TEMPLATE_ORIGIN
+    # subprocess.run([
+    #     'TVResample', '-in', "mean_initial.nii.gz",
+    #     '-out', "mean_initial.nii.gz",
+    #     '-align', 'center',
+    #     '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
+    #     '-vsize', str(XV), str(YV), str(ZV),
+    #     '-origin', str(OX), str(OY), str(OZ),
+    # ])
+    # print(f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `mean_initial.nii.gz`.")
 
     # Move the created `mean_initial.nii.gz` to output_path location
     save_path = orig_output_path/"mean_initial_template.nii.gz"
