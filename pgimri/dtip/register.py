@@ -231,6 +231,7 @@ def dtitk_register_multi(input_path: Union[Path, str],
 
     X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
     XV, YV, ZV = TEMPLATE_VOXEL_SPACE
+    OX, OY, OZ = TEMPLATE_ORIGIN
     
     if mean_initial_template_path == None:
         # Run the `dti_template_bootstrap` command
@@ -239,18 +240,27 @@ def dtitk_register_multi(input_path: Union[Path, str],
         ])
 
         template_path = "mean_initial.nii.gz"
-        subprocess.run([
+        resample_cmd = [
             'TVResample', '-in', template_path,
             '-out', template_path,
             '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
             '-vsize', str(XV), str(YV), str(ZV),
-        ])
+        ]
+        if OX and OY and OZ:
+            resample_cmd += ['-origin', str(OX), str(OY), str(OZ),]
+        subprocess.run(resample_cmd)
+
         logger.info(
             f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
 
         # * Fix the origin of template to 0, 0, 0
         subprocess.run([
             'TVAdjustVoxelspace', '-in', template_path, '-out', template_path, '-origin', '0', '0', '0'
+        ])
+
+        # Threshold the trailing borders
+        subprocess.run([
+            'fslmaths', 'mean_initial.nii.gz', '-thr', '0.30', 'mean_initial.nii.gz'
         ])
 
         # Check new affine volumes
@@ -340,7 +350,8 @@ def dtitk_register_multi(input_path: Union[Path, str],
 def dtitk_register(input_path: Union[Path, str],
                    template_path: Union[Path, str],
                    mean_initial_template_path: Union[Path, str, None],
-                   output_path: Union[Path, str], no_diffeo: bool = False) -> int:
+                   output_path: Union[Path, str], 
+                   no_diffeo: bool = False) -> int:
     """DTI existing Template-based Image Registration of single subject using Diffusion Tensor Imaging ToolKit (DTI-TK)
 
     Args:
@@ -390,7 +401,8 @@ def dtitk_register(input_path: Union[Path, str],
 
     X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
     XV, YV, ZV = TEMPLATE_VOXEL_SPACE
-    
+    OX, OY, OZ = TEMPLATE_ORIGIN
+
     if mean_initial_template_path == None:
         # Run the `dti_template_bootstrap` command
         subprocess.run([
@@ -398,30 +410,36 @@ def dtitk_register(input_path: Union[Path, str],
         ])
 
         template_path = "mean_initial.nii.gz"
-        subprocess.run([
-            'TVResample', '-in', template_path,
-            '-out', template_path,
-            '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
-            '-vsize', str(XV), str(YV), str(ZV),
-        ])
-        logger.info(
-            f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
 
-        # * Fix the origin of template to 0, 0, 0
-        subprocess.run([
-            'TVAdjustVoxelspace', '-in', template_path, '-out', template_path, '-origin', '0', '0', '0'
-        ])
+        if not no_diffeo:
+            resample_cmd = [
+                'TVResample', '-in', template_path,
+                '-out', template_path,
+                '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
+                '-vsize', str(XV), str(YV), str(ZV),
+            ]
+            if OX and OY and OZ:
+                resample_cmd += ['-origin', str(OX), str(OY), str(OZ),]
+            subprocess.run(resample_cmd)
 
-        # Check new affine volumes
-        for subject_path in Path(output_path).glob("*"):
-            if subject_path.is_dir():
-                filepath = subject_path / \
-                    f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
-                if not filepath.exists():
-                    _msg = f"`{filepath}` not found at `{subject_path}`."
-                    _msg += "Make sure `dti_template_bootstrap` command ran correctly."
-                    _msg += " Check its log."
-                    raise RuntimeError(_msg)
+            logger.info(
+                f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
+
+            # * Fix the origin of template to 0, 0, 0
+            subprocess.run([
+                'TVAdjustVoxelspace', '-in', template_path, '-out', template_path, '-origin', '0', '0', '0'
+            ])
+
+            # Check new affine volumes
+            for _subject_path in Path(output_path).glob("*"):
+                if _subject_path.is_dir():
+                    filepath = _subject_path / \
+                        f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
+                    if not filepath.exists():
+                        _msg = f"`{filepath}` not found at `{_subject_path}`."
+                        _msg += "Make sure `dti_template_bootstrap` command ran correctly."
+                        _msg += " Check its log."
+                        raise RuntimeError(_msg)
 
     else:
         template_path = mean_initial_template_path
@@ -433,7 +451,7 @@ def dtitk_register(input_path: Union[Path, str],
     logger.info("Affine alignment with template refinement...")
     subprocess.run([
         'dti_affine_reg', template_path, subject_path,
-        'EDS', '4', '4', '4', '0.01', '1'
+        'EDS', '4', '4', '4', '0.01'
     ])
     logger.info("Affine alignment completed!")
 
@@ -466,22 +484,22 @@ def dtitk_register(input_path: Union[Path, str],
                 ])
                 logger.info("Done!")
 
-    # # Move extra generated files to output_path folder
-    # logger.info(f"Moving all generated files to `{output_path}`")
-    # for filename in Path('.').glob("*"):
-    #     if filename.is_file():
-    #         filename = str(filename)
-    #         # collect NIfTI mean files
-    #         if filename.startswith('mean_') and filename.endswith('.nii.gz'):
-    #             print(f"Moving `{filename}` to `{output_path}`")
-    #             shutil.move(filename, output_path/filename)
-    #         # collect mask file
-    #         if filename == "mask.nii.gz":
-    #             print(f"Moving `{filename}` to `{output_path}`")
-    #             shutil.move(filename, output_path/filename)
-    #         if filename.startswith('template'):
-    #             print(f"Moving `{filename}` to `{output_path}`")
-    #             shutil.move(filename, output_path/filename)
-    # logger.info("Registration complete!")
+    # Move extra generated files to output_path folder
+    logger.info(f"Moving all generated files to `{output_path}`")
+    for filename in Path('.').glob("*"):
+        if filename.is_file():
+            filename = str(filename)
+            # collect NIfTI mean files
+            if filename.startswith('mean_') and filename.endswith('.nii.gz'):
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+            # collect mask file
+            if filename == "mask.nii.gz":
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+            if filename.startswith('template'):
+                print(f"Moving `{filename}` to `{output_path}`")
+                shutil.move(filename, output_path/filename)
+    logger.info("Registration complete!")
 
     return 0

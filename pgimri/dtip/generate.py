@@ -171,18 +171,34 @@ def make_initial_template_from_pop(input_path: Union[str, Path],
         "dti_template_bootstrap", template_path, subs_filepath, '-SMOption', 'EDS', '4', '4', '4', '0.0001'
     ])
 
-    # X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
-    # XV, YV, ZV = TEMPLATE_VOXEL_SPACE
-    # OX, OY, OZ = TEMPLATE_ORIGIN
-    # subprocess.run([
-    #     'TVResample', '-in', "mean_initial.nii.gz",
-    #     '-out', "mean_initial.nii.gz",
-    #     '-align', 'center',
-    #     '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
-    #     '-vsize', str(XV), str(YV), str(ZV),
-    #     '-origin', str(OX), str(OY), str(OZ),
-    # ])
-    # print(f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `mean_initial.nii.gz`.")
+    X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
+    XV, YV, ZV = TEMPLATE_VOXEL_SPACE
+    OX, OY, OZ = TEMPLATE_ORIGIN
+    resample_cmd = [
+        'TVResample', '-in', "mean_initial.nii.gz",
+        '-out', "mean_initial.nii.gz",
+        '-align', 'center',
+        '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
+        '-vsize', str(XV), str(YV), str(ZV),
+    ]
+    if OX and OY and OZ:
+        resample_cmd += ['-origin', str(OX), str(OY), str(OZ)]
+    subprocess.run(resample_cmd)
+    
+    print(f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `mean_initial.nii.gz`.")
+
+    # Reset the origin to zero
+    subprocess.run([
+        'TVAdjustVoxelspace',
+        '-in', 'mean_initial.nii.gz',
+        '-out', 'mean_initial.nii.gz',
+        '-origin', '0', '0', '0'
+    ])
+
+    # Threshold the trailing borders
+    subprocess.run([
+        'fslmaths', 'mean_initial.nii.gz', '-thr', '0.30', 'mean_initial.nii.gz'
+    ])
 
     # Move the created `mean_initial.nii.gz` to output_path location
     save_path = orig_output_path/"mean_initial_template.nii.gz"
@@ -190,5 +206,5 @@ def make_initial_template_from_pop(input_path: Union[str, Path],
     print(f"New template saved at `{save_path}`.")
     
     # Remove extra files generated for this template
-    shutil.rmtree(output_path)
+    # shutil.rmtree(output_path)
     return 0
