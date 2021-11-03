@@ -36,6 +36,8 @@ BEST_POPULATION_SUBSET = [
 # Number of iterations for `dti_rigid_population` and `dti_affine_population` commands for image registration.
 NUM_ALIGN_ITERS = 5
 
+NUM_DIFFEO_ITERS = 3
+
 # resample the template into a voxel space with the voxel dimensions being powers of 2
 # TEMPLATE_ORIGIN works with Makropoulos template. Disable origin fix with JHU template
 # With Makropoulos T2 Template (256)
@@ -43,9 +45,17 @@ TEMPLATE_SPATIAL_DIMS = [256, 256, 128]
 TEMPLATE_VOXEL_SPACE = [0.50, 0.50, 1.0]
 TEMPLATE_ORIGIN = [-104, 155, 40]
 # With JHU_neonate_SS_fass Template (256)
-TEMPLATE_SPATIAL_DIMS = [256, 256, 128]
-TEMPLATE_VOXEL_SPACE = [0.50, 0.50, 1.0]
-TEMPLATE_ORIGIN = [None]*3
+# TEMPLATE_SPATIAL_DIMS = [256, 256, 128]
+# TEMPLATE_VOXEL_SPACE = [0.50, 0.50, 1.0]
+# TEMPLATE_ORIGIN = [None]*3
+
+
+
+
+# SUBJ_TO_TEMPLATE_ORIGIN = [-65.641, 78.8492, 45.7697] # M128
+# SUBJ_TO_TEMPLATE_ORIGIN = [-131.282, 157.698, 45.7697] # M256
+SUBJ_TO_TEMPLATE_ORIGIN = [-0, -0, -0] # JHU
+
 
 
 # Logging settings, Either CRITICAL, ERROR, WARNING, INFO or DEBUG.

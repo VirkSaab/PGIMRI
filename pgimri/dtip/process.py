@@ -1,6 +1,8 @@
 """This module implements the DTI preprocessing pipeline for one and multi
     subject DTI data.
 
+    Source: https://open.win.ox.ac.uk/pages/fslcourse/practicals/fdt1/index.html#pipeline
+
     The steps involved in this pipeline are:
     
     0. Extract data from subject's zip file, if input is a zip file.
@@ -51,7 +53,7 @@ def dwi_denoise(input_path: Union[str, Path], output_path: Union[str, Path]):
 
 def dti_skull_strip(input_path: Union[str, Path], 
                     output_path: Union[str, Path],
-                    f_value: float = 0.2):
+                    f_value: float = 0.5):
     """Perform skull stripping on 4D DTI data using BET (with -F flag)
 
     Args:

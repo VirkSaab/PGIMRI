@@ -72,4 +72,3 @@ This command performs the following steps in the given order. Each step has its 
     1. Use one `initial_mean` template image for population registration for both before and after scans.
     2. Use group wise population template. Where before and after scans has their own `initial_mean` template.
 
-

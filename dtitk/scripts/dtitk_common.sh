@@ -127,7 +127,7 @@ prior=( 0  0.100 0.090 0.080 0.070 0.060 0.050 )
 ## moderate constraint
 jaclimit=(0.02 50)
 ## weak constraint
-## jaclimit=(0.01 100)
+# jaclimit=(0.01 100)
 
 ## length scale in mm
 if [ -z "${DTITK_SPECIES}" ]

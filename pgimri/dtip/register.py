@@ -202,38 +202,38 @@ def dtitk_register_multi(input_path: Union[Path, str],
     dtitk_maindir = f"{Path(__file__).parent.parent.parent}/dtitk"
     os.environ["DTITK_ROOT"] = dtitk_maindir
     os.environ["PATH"] += f":{dtitk_maindir}/bin:{dtitk_maindir}/utilities:{dtitk_maindir}/scripts"
-
-    # * Step 1: Convert FSL format to DTI-TK format and move files
-    # * to `output_path`.
-    exit_code = fsl_to_dtitk_multi(input_path, output_path)
-    if exit_code != 0:  # Stop here if any error
-        _msg = "Error in `dtitk_register_multi` execution :(. Stopped."
-        logger.error(_msg)
-        raise RuntimeError(_msg)
-    logger.debug(
-        f"Converted `{input_path}` to DTI-TK format and saved at `{output_path}`.")
-
-    # * SPATIAL NORMALIZATION AND ATLAS CONSTRUCTION
-    # * Step 2. Bootstrapping the initial DTI template from the input DTI volumes
-    # Get subjects' DTI file paths
-    subs_filepaths = []
-    for subject_path in output_path.glob("*"):
-        if subject_path.is_dir():
-            filename = f"{PROCESSED_DTI_FILENAME}_dtitk.nii.gz"
-            filepath = f"{subject_path}/{filename}"
-            subs_filepaths.append(filepath)
-
-    # Create a file with subset names
-    subs_filepath = output_path/"subs.txt"
-    with open(subs_filepath, "w") as subf:
-        for filepath in subs_filepaths:
-            subf.write(f"{filepath}\n")
-
-    X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
-    XV, YV, ZV = TEMPLATE_VOXEL_SPACE
-    OX, OY, OZ = TEMPLATE_ORIGIN
     
     if mean_initial_template_path == None:
+        # * Step 1: Convert FSL format to DTI-TK format and move files
+        # * to `output_path`.
+        exit_code = fsl_to_dtitk_multi(input_path, output_path)
+        if exit_code != 0:  # Stop here if any error
+            _msg = "Error in `dtitk_register_multi` execution :(. Stopped."
+            logger.error(_msg)
+            raise RuntimeError(_msg)
+        logger.debug(
+            f"Converted `{input_path}` to DTI-TK format and saved at `{output_path}`.")
+
+        # * SPATIAL NORMALIZATION AND ATLAS CONSTRUCTION
+        # * Step 2. Bootstrapping the initial DTI template from the input DTI volumes
+        # Get subjects' DTI file paths
+        subs_filepaths = []
+        for subject_path in output_path.glob("*"):
+            if subject_path.is_dir():
+                filename = f"{PROCESSED_DTI_FILENAME}_dtitk.nii.gz"
+                filepath = f"{subject_path}/{filename}"
+                subs_filepaths.append(filepath)
+
+        # Create a file with subset names
+        subs_filepath = output_path/"subs.txt"
+        with open(subs_filepath, "w") as subf:
+            for filepath in subs_filepaths:
+                subf.write(f"{filepath}\n")
+
+        X_SIZE, Y_SIZE, Z_SIZE = TEMPLATE_SPATIAL_DIMS
+        XV, YV, ZV = TEMPLATE_VOXEL_SPACE
+        OX, OY, OZ = TEMPLATE_ORIGIN
+        
         # Run the `dti_template_bootstrap` command
         subprocess.run([
             "dti_template_bootstrap", template_path, subs_filepath, 'EDS', '4', '4', '4', '0.0001'
@@ -275,6 +275,20 @@ def dtitk_register_multi(input_path: Union[Path, str],
                     raise RuntimeError(_msg)
 
     else:
+        # Get subjects' DTI file paths
+        subs_filepaths = []
+        for subject_path in output_path.glob("*"):
+            if subject_path.is_dir():
+                filename = f"{PROCESSED_DTI_FILENAME}_dtitk.nii.gz"
+                filepath = f"{subject_path}/{filename}"
+                subs_filepaths.append(filepath)
+
+        # Create a file with subset names
+        subs_filepath = output_path/"subs.txt"
+        with open(subs_filepath, "w") as subf:
+            for filepath in subs_filepaths:
+                subf.write(f"{filepath}\n")
+                
         template_path = mean_initial_template_path
     
     # * Step 3: Rigid Alignment of DTI Volumes (SKIPPED AS PER INSTRUCTIONS IN THE DTI-TK TUTORIAL)
@@ -287,7 +301,7 @@ def dtitk_register_multi(input_path: Union[Path, str],
             f"[{i}/{len(subs_filepaths)}] Affine alignment of `{subject_path}`...")
         subprocess.run([
             'dti_affine_reg', template_path, subject_path,
-            'EDS', '4', '4', '4', '0.01'
+            'EDS', '4', '4', '4', '0.001'
         ])
         # logger.info("Adjusting origin to 0, 0, 0.")
         # subprocess.run([
@@ -321,7 +335,7 @@ def dtitk_register_multi(input_path: Union[Path, str],
             subprocess.run([
                 'dti_diffeomorphic_reg',
                 template_path, filepath, 'mask.nii.gz',
-                '1', '6', '0.0002'
+                '1', str(NUM_DIFFEO_ITERS), '0.0002'
             ])
             logger.info("Done!")
 
@@ -383,6 +397,11 @@ def dtitk_register(input_path: Union[Path, str],
     dtitk_basename = f"{PROCESSED_DTI_FILENAME}_dtitk"
     for dtitk_filepath in Path(input_path).glob("*"):
         if str(dtitk_filepath.stem).startswith(dtitk_basename):
+            # Align the origin of scan to template
+            xx, yy, zz = SUBJ_TO_TEMPLATE_ORIGIN
+            subprocess.run([
+                'TVAdjustVoxelspace', '-in', dtitk_filepath, '-out', dtitk_filepath, '-origin', str(xx), str(yy), str(zz)
+            ])
             # print("FILE =", dtitk_filepath.name)
             shutil.move(dtitk_filepath, move_to/dtitk_filepath.name)
 
@@ -411,38 +430,38 @@ def dtitk_register(input_path: Union[Path, str],
 
         template_path = "mean_initial.nii.gz"
 
-        if not no_diffeo:
-            resample_cmd = [
-                'TVResample', '-in', template_path,
-                '-out', template_path,
-                '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
-                '-vsize', str(XV), str(YV), str(ZV),
-            ]
-            if OX and OY and OZ:
-                resample_cmd += ['-origin', str(OX), str(OY), str(OZ),]
-            subprocess.run(resample_cmd)
+    #     if not no_diffeo:
+    #         resample_cmd = [
+    #             'TVResample', '-in', template_path,
+    #             '-out', template_path,
+    #             '-size', str(X_SIZE), str(Y_SIZE), str(Z_SIZE),
+    #             '-vsize', str(XV), str(YV), str(ZV),
+    #         ]
+    #         if OX and OY and OZ:
+    #             resample_cmd += ['-origin', str(OX), str(OY), str(OZ),]
+    #         subprocess.run(resample_cmd)
 
-            logger.info(
-                f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
+    #         logger.info(
+    #             f"Resampled mean_initial image to ({X_SIZE}, {Y_SIZE}, {Z_SIZE}). Saved at `{template_path}`.")
 
-            # * Fix the origin of template to 0, 0, 0
-            subprocess.run([
-                'TVAdjustVoxelspace', '-in', template_path, '-out', template_path, '-origin', '0', '0', '0'
-            ])
+    #         # * Fix the origin of template to 0, 0, 0
+    #         subprocess.run([
+    #             'TVAdjustVoxelspace', '-in', template_path, '-out', template_path, '-origin', '0', '0', '0'
+    #         ])
 
-            # Check new affine volumes
-            for _subject_path in Path(output_path).glob("*"):
-                if _subject_path.is_dir():
-                    filepath = _subject_path / \
-                        f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
-                    if not filepath.exists():
-                        _msg = f"`{filepath}` not found at `{_subject_path}`."
-                        _msg += "Make sure `dti_template_bootstrap` command ran correctly."
-                        _msg += " Check its log."
-                        raise RuntimeError(_msg)
+    #         # Check new affine volumes
+    #         for _subject_path in Path(output_path).glob("*"):
+    #             if _subject_path.is_dir():
+    #                 filepath = _subject_path / \
+    #                     f"{PROCESSED_DTI_FILENAME}_dtitk_aff.nii.gz"
+    #                 if not filepath.exists():
+    #                     _msg = f"`{filepath}` not found at `{_subject_path}`."
+    #                     _msg += "Make sure `dti_template_bootstrap` command ran correctly."
+    #                     _msg += " Check its log."
+    #                     raise RuntimeError(_msg)
 
-    else:
-        template_path = mean_initial_template_path
+    # else:
+    #     template_path = mean_initial_template_path
 
     # * Step 3: Rigid Alignment of DTI Volumes (SKIPPED AS PER INSTRUCTIONS IN THE DTI-TK TUTORIAL)
     # This step is not required when step 2 is performed with existing template.
@@ -451,7 +470,7 @@ def dtitk_register(input_path: Union[Path, str],
     logger.info("Affine alignment with template refinement...")
     subprocess.run([
         'dti_affine_reg', template_path, subject_path,
-        'EDS', '4', '4', '4', '0.01'
+        'EDS', '4', '4', '4', '0.01', '1'
     ])
     logger.info("Affine alignment completed!")
 
@@ -480,7 +499,7 @@ def dtitk_register(input_path: Union[Path, str],
                 subprocess.run([
                     'dti_diffeomorphic_reg',
                     template_path, filepath, 'mask.nii.gz',
-                    '1', '6', '0.0002'
+                    '1', str(NUM_DIFFEO_ITERS), '0.0002'
                 ])
                 logger.info("Done!")
 

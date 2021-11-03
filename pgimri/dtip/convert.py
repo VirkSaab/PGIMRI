@@ -190,7 +190,8 @@ def fsl_to_dtitk_multi(input_path: Union[Path, str],
 
 @show_exec_time
 def dtitk_to_fsl_multi(input_path: Union[Path, str],
-                       output_path: Union[Path, str]) -> int:
+                       output_path: Union[Path, str],
+                       use_type: Union[str, None] = 'diffeo') -> int:
     """Convert DTI-TK specific format to FSL
 
         This function converts the registred files using DTI-TK back to FSL format. This function runs DTI-TK's `TVEigenSystem` command per subject and move the files to `output_path`.
@@ -198,12 +199,21 @@ def dtitk_to_fsl_multi(input_path: Union[Path, str],
         input_path: folder path containing registred files in DTI-TK .nii.gz format.
         output_path: Move the converted files to this location.
     """
+    if use_type == 'aff':
+        filename_ext = '_aff'
+    elif use_type == 'diffeo':
+        filename_ext = '_aff_diffeo'
+    elif use_type == None:
+        filename_ext = ''
+    else:
+        raise ValueError(f"use_type={use_type} not understood.")
+        
     input_path, output_path = Path(input_path), Path(output_path)
     subjects = [p for p in Path(input_path).glob("*") if p.is_dir()]
     move_these = ['L1', 'L2', 'L3', 'V1', 'V2', 'V3', 'fa', 'ad', 'rd']
     total_subjects = len(subjects)
     for i, subject_path in enumerate(subjects, start=1):
-        basename = f"{subject_path}/{PROCESSED_DTI_FILENAME}_dtitk_aff_diffeo"
+        basename = f"{subject_path}/{PROCESSED_DTI_FILENAME}_dtitk{filename_ext}"
 
         # Convert
         registered_filename = f"{basename}.nii.gz"

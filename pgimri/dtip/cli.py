@@ -66,6 +66,23 @@ def dicom_nifti(input_path: Union[str, Path], output_path: Union[str, Path], met
         convert_dicom_to_nifti(input_path, output_path, method=method)
     click.echo(f"done!")
 
+
+@cli.command()
+@click.argument('input_path', type=click.Path(exists=True))
+@click.option('-o', '--output_path', default='dtitk_to_fsl_output', show_default=True, help="path/to/processed/subject_folder")
+@click.option('-use_type', type=click.Choice(['aff', 'diffeo', 'none'], case_sensitive=False))
+def dtitk_fsl_multi(input_path: str, output_path: str, use_type: str):
+    """Convert DTI-TK specific format to FSL
+
+        This function converts the registred files using DTI-TK back to FSL format. This function runs DTI-TK's `TVEigenSystem` command per subject and move the files to `output_path`.
+    Args:
+        input_path: folder path containing registred files in DTI-TK .nii.gz format.
+        output_path: Move the converted files to this location.
+    """
+    ret = dtitk_to_fsl_multi(input_path, output_path, use_type)
+    if ret == 0:
+        click.echo("Done.")
+        
 # -------------------------------- dtip > locate module
 
 
@@ -244,22 +261,6 @@ def make_template(input_path: str, template_path: str, output_path: str):
     if ret == 0:
         click.echo("Done.")
 
-
-# --------------------------------- dtip > mapping module
-@cli.command()
-@click.argument('input_path', type=click.Path(exists=True))
-@click.option('-o', '--output_path', default='dtitk_to_fsl_output', show_default=True, help="path/to/processed/subject_folder")
-def dtitk_fsl_multi(input_path: str, output_path: str):
-    """Convert DTI-TK specific format to FSL
-
-        This function converts the registred files using DTI-TK back to FSL format. This function runs DTI-TK's `TVEigenSystem` command per subject and move the files to `output_path`.
-    Args:
-        input_path: folder path containing registred files in DTI-TK .nii.gz format.
-        output_path: Move the converted files to this location.
-    """
-    ret = dtitk_to_fsl_multi(input_path, output_path)
-    if ret == 0:
-        click.echo("Done.")
 
 
 
